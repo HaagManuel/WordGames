@@ -7,6 +7,7 @@
 #include "trie.h"
 #include "measure_time.h"
 #include "io.h"
+#include "small_map.h"
 
 void benchmark(std::vector<std::string> &words)
 {
@@ -34,7 +35,7 @@ void benchmark(std::vector<std::string> &words)
             }
             checksum += b;
         };
-        
+
         // int time1 = measureTimeMicroS(construction);
         // int time2 = measureTimeMicroS(pos_lu);
         int time1 = measureTimeMs(construction);
@@ -61,10 +62,9 @@ int main()
     std::cout << "Hello Wordle!"
               << "\n";
 
-    // paths are relative to build directory
-    // std::string file = "../dictionary_9030.txt";
     std::string file = "../dictionary_large.txt";
-    auto words = read_dictionary(file);
+    auto words = io::read_dictionary(file);
     std::cout << "num words: " << words.size() << "\n";
+
     benchmark(words);
 }
