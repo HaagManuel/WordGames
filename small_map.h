@@ -30,7 +30,7 @@ struct SmallSortedMap
     }
 
     // returns {value, true} if key is present, {default, false} otherwise
-    std::pair<Value, bool> get_value_if_key_present(Key key)
+    std::pair<Value, bool> get_value_if_key_present(Key key) const
     {
         for (auto [k, v] : arr)
         {
@@ -41,6 +41,8 @@ struct SmallSortedMap
         }
         return {Value(), false};
     }
+
+    inline int size() const { return arr.size(); }
     std::vector<std::pair<Key, Value>> arr;
 };
 
@@ -65,7 +67,7 @@ struct SmallUnsortedMap
     }
 
     // returns {value, true} if key is present, {default, false} otherwise
-    std::pair<Value, bool> get_value_if_key_present(Key key)
+    std::pair<Value, bool> get_value_if_key_present(Key key) const
     {
         for (auto [k, v] : arr)
         {
@@ -76,5 +78,8 @@ struct SmallUnsortedMap
         }
         return {Value(), false};
     }
+
+    inline int size() const { return arr.size(); }
+
     std::vector<std::pair<Key, Value>> arr;
 };

@@ -43,8 +43,11 @@ void benchmark(std::vector<std::string> &words)
         times1.push_back(time1);
         times2.push_back(time2);
 
+        if (r == 0)
+        {
+            trie.print_degree_statistic();
+        }
         // 1027817 nodes for large dictionary
-        // std::cout << trie.nodes.size() << "\n";
     }
     std::string unit = "ms";
     // std::string unit = "microseconds";
@@ -62,9 +65,11 @@ int main()
     std::cout << "Hello Wordle!"
               << "\n";
 
+    // std::string file = "../dictionary_9030.txt";
     std::string file = "../dictionary_large.txt";
     auto words = io::read_dictionary(file);
-    std::cout << "num words: " << words.size() << "\n";
+    std::cout << "number of words: " << words.size() << "\n";
+
 
     benchmark(words);
 }
