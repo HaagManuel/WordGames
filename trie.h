@@ -3,9 +3,18 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <queue>
+#include <type_traits>
 
 #include "small_map.h"
+#include "graph.h"
 
+struct TrieEdge
+{
+    int id;
+    char letter;
+    bool is_word;
+};
 struct TrieNodeFixedArray
 {
     TrieNodeFixedArray()
@@ -129,9 +138,19 @@ struct Trie
     using TrieNode = TrieNodeSmallMap;
     // using TrieNode = TrieNodeFixedArray;
     // using TrieNode = TrieNodeHashMap;
+
     Trie()
     {
         root_idx = make_new_node();
+    }
+
+    Trie(std::vector<std::string> &word_list)
+    {
+        root_idx = make_new_node();
+        for (auto &s : word_list)
+        {
+            insert(s);
+        }
     }
 
     void insert(std::string &s)
@@ -172,6 +191,24 @@ struct Trie
     {
         nodes.emplace_back();
         return nodes.size() - 1;
+    }
+
+    AdjacencyList<TrieEdge> extract_graph()
+    {
+        std::vector<std::vector<TrieEdge>> graph(nodes.size());
+        for (uint v = 0; v < nodes.size(); v++)
+        {
+            graph[v].reserve(nodes[v].children.size());
+        }
+        for (uint v = 0; v < nodes.size(); v++)
+        {
+            for (auto [letter, w] : nodes[v].children)
+            {
+                TrieEdge e{w, letter, nodes[w].is_word()};
+                graph[v].push_back(e);
+            }
+        }
+        return AdjacencyList{graph};
     }
 
     int get_num_nodes() const

@@ -42,7 +42,14 @@ struct SmallSortedMap
         return {Value(), false};
     }
 
-    inline int size() const { return arr.size(); }
+    inline int size() const
+    {
+        return arr.size();
+    }
+
+    std::vector<std::pair<Key, Value>>::iterator begin() { return arr.begin(); }
+    std::vector<std::pair<Key, Value>>::iterator end() { return arr.end(); }
+
     std::vector<std::pair<Key, Value>> arr;
 };
 
@@ -80,6 +87,9 @@ struct SmallUnsortedMap
     }
 
     inline int size() const { return arr.size(); }
+
+    std::vector<std::pair<Key, Value>>::iterator begin() { return arr.begin(); }
+    std::vector<std::pair<Key, Value>>::iterator end() { return arr.end(); }
 
     std::vector<std::pair<Key, Value>> arr;
 };
