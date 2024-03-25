@@ -27,7 +27,6 @@ struct WordChallenge
         {
             graph = AdjacencyArray(adj_list);
         }
-
         node_to_word_index = StaticTrieGraph<EdgeType>(words).construct_node_to_word_index(words);
     }
 

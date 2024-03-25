@@ -114,6 +114,47 @@ void benchmark(WordList &words)
     std::cout << checksum << "\n";
 }
 
+template <typename TrieType>
+void benchmark_by_len(WordList &words, std::string trie_name)
+{
+    std::cout << trie_name << "\n";
+    int seed = 0;
+    srand(seed);
+    int repeats = 10000;
+    TrieType trie(words);
+    std::vector<std::vector<int>> index_len = index_word_of_len(words);
+    int min_len = 3;
+    int min_words = 100;
+    int checksum = 0;
+
+    std::vector<int> indices;
+
+    auto query = [&]()
+    {
+        for (auto i : indices)
+        {
+            checksum ^= trie.contains_word(words[i]);
+        }
+    };
+    for (uint i = min_len; i < index_len.size(); i++)
+    {
+        int m = index_len[i].size();
+        if (m >= min_words)
+        {
+            for (int r = 0; r < repeats; r++)
+            {
+                int j = index_len[i][rand() % m];
+                indices.push_back(j);
+            }
+            double avg_time = (double)measureTimeMicroS(query) / repeats;
+            std::cout << "query length " << i << ": " << avg_time << " microseconds \n";
+        }
+        indices.clear();
+    }
+    std::cout << checksum << "\n";
+    std::cout << "\n";
+}
+
 void benchmark_word_challenge(WordList &words)
 {
     int repeats = 1000;
@@ -179,6 +220,13 @@ int main()
 
     // benchmark(words);
     // benchmark_word_challenge(words);
+
+    // benchmark_by_len<Trie>(words, "Trie");
+    // benchmark_by_len<TrieArray>(words, "TrieArray");
+    // benchmark_by_len<StaticTrieGraph<TrieEdge>>(words, "StaticTrie");
+    // benchmark_by_len<StaticTrieGraph<CompressedTrieEdge>>(words, "StaticTrie Compressed Edge");
+
+    auto_play_wordle(words);
 
     // WordChallenge wc(words);
     // std::string s = "abnormal";

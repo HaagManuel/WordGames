@@ -66,11 +66,9 @@ std::vector<int> compute_bfs_order(Graph &graph, int start_node)
         int v = q.front();
         q.pop();
         bfs_order[v] = id++;
-        std::cout << "node: " << v << "\n";
         for (auto &e : graph.neighbors(v))
         {
             q.push(e.get_id());
-            std::cout << "edge: " << e.get_id() << "\n";
         }
     }
     return bfs_order;

@@ -19,6 +19,12 @@ struct StaticTrieGraph
         graph = AdjacencyArray<EdgeType>::construct_with_dfs_order(adj_list);
     }
 
+    // use same order as in adj_list
+    StaticTrieGraph(WordList &words, AdjacencyArray<EdgeType> &adj_array)
+    {
+        graph = adj_array;
+    }
+
     std::vector<int> construct_node_to_word_index(WordList &words)
     {
         std::vector<int> node_to_word_index(graph.num_nodes(), -1);

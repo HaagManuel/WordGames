@@ -10,15 +10,15 @@ using WordList = std::vector<std::string>;
 static constexpr int MAX_WORD_LEN = 100;
 static constexpr int ALPHABET_SIZE = 26;
 
-static const std::string RESET =  "\033[0m";
-static const std::string BLACK =  "\033[30m";
-static const std::string RED =  "\033[31m";
-static const std::string GREEN =  "\033[32m";
-static const std::string YELLOW =  "\033[33m";
-static const std::string BLUE =  "\033[34m";
-static const std::string MAGENTA =  "\033[35m";
-static const std::string CYAN =  "\033[36m";
-static const std::string WHITE =  "\033[37m";
+static const std::string RESET = "\033[0m";
+static const std::string BLACK = "\033[30m";
+static const std::string RED = "\033[31m";
+static const std::string GREEN = "\033[32m";
+static const std::string YELLOW = "\033[33m";
+static const std::string BLUE = "\033[34m";
+static const std::string MAGENTA = "\033[35m";
+static const std::string CYAN = "\033[36m";
+static const std::string WHITE = "\033[37m";
 
 void color_print(std::string text, std::string color)
 {
@@ -83,9 +83,14 @@ struct CharCounter
         }
     }
 
-    void new_counter(std::string &s)
+    void reset_counter()
     {
         std::fill(counter.begin(), counter.end(), 0);
+    }
+
+    void new_counter(std::string &s)
+    {
+        reset_counter();
         for (char c : s)
         {
             increment(c);
@@ -105,6 +110,11 @@ struct CharCounter
         counter[i]++;
     }
 
+    inline void set_count(char c, int count)
+    {
+        int i = char_to_int(c);
+        counter[i] = count;
+    }
     inline int get_count(char c)
     {
         int i = char_to_int(c);
