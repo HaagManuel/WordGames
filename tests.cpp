@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "trie.h"
+#include "static_trie.h"
 #include "io.h"
 #include "small_map.h"
 
@@ -11,35 +12,69 @@ TEST(TrieTest, SmallDictionary)
 {
     std::string file = "../dictionary_9030.txt";
     auto words = io::read_dictionary(file);
-    Trie trie;
+    Trie trie1(words);
+    TrieArray trie2(words);
+    StaticTrieGraph<TrieEdge> trie3(words);
+    StaticTrieGraph<CompressedTrieEdge> trie4(words);
     for (auto &s : words)
     {
-        trie.insert(s);
-    }
-    for (auto &s : words)
-    {
-        ASSERT_TRUE(trie.contains_word(s));
+        ASSERT_TRUE(trie1.contains_word(s));
+        ASSERT_TRUE(trie2.contains_word(s));
+        ASSERT_TRUE(trie3.contains_word(s));
+        ASSERT_TRUE(trie4.contains_word(s));
     }
 }
 
 TEST(TrieTest, PositveAndNegative)
 {
-    Trie trie;
     std::vector<std::string> v1 = {"apple", "banana", "pear", "grape"};
     std::vector<std::string> v2 = {"appl", "bpple", "banaa", "par", "grpe"};
+    Trie trie1(v1);
+    TrieArray trie2(v1);
+    StaticTrieGraph<TrieEdge> trie3(v1);
+    StaticTrieGraph<CompressedTrieEdge> trie4(v1);
     for (auto &s : v1)
     {
-        trie.insert(s);
-    }
-    for (auto &s : v1)
-    {
-        ASSERT_TRUE(trie.contains_word(s));
+        ASSERT_TRUE(trie1.contains_word(s));
+        ASSERT_TRUE(trie2.contains_word(s));
+        ASSERT_TRUE(trie3.contains_word(s));
+        ASSERT_TRUE(trie4.contains_word(s));
     }
     for (auto &s : v2)
     {
         std::cout << s << "\n";
-        ASSERT_FALSE(trie.contains_word(s));
+        ASSERT_FALSE(trie1.contains_word(s));
+        ASSERT_FALSE(trie2.contains_word(s));
+        ASSERT_FALSE(trie3.contains_word(s));
+        ASSERT_FALSE(trie4.contains_word(s));
     }
+}
+
+TEST(GraphTest, OrderTest)
+{
+    /*
+         0,.
+      1,a   4,b
+      2,a   5,b
+      3,a   6,b
+    */
+    std::vector<int> bfs = {0, 1, 3, 5, 2, 4, 6};
+    std::vector<int> dfs = {0, 1, 2, 3, 4, 5, 6};
+    std::vector<std::string> words = {"aaa", "bbb"};
+    Trie trie(words);
+
+    auto graph1 = trie.extract_graph<TrieEdge>();
+    auto graph2 = AdjacencyArray(graph1);
+
+    auto bfs1 = compute_bfs_order(graph1, 0);
+    auto bfs2 = compute_bfs_order(graph2, 0);
+    auto dfs1 = compute_dfs_order(graph1, 0);
+    auto dfs2 = compute_dfs_order(graph2, 0);
+
+    ASSERT_TRUE(bfs1 == bfs2);
+    ASSERT_TRUE(dfs1 == dfs2);
+    ASSERT_TRUE(bfs1 == bfs);
+    ASSERT_TRUE(dfs1 == dfs);
 }
 
 TEST(SmallMapTest, TestSorted)

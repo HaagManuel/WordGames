@@ -65,9 +65,11 @@ std::vector<int> compute_bfs_order(Graph &graph, int start_node)
         int v = q.front();
         q.pop();
         bfs_order[v] = id++;
+        std::cout << "node: " << v << "\n";
         for (auto &e : graph.neighbors(v))
         {
-            q.push(e.id);
+            q.push(e.get_id());
+            std::cout << "edge: " << e.get_id() << "\n";
         }
     }
     return bfs_order;
@@ -87,7 +89,7 @@ int compute_dfs_order_rec(Graph &graph, std::vector<int> &mapping, int id, int v
     mapping[v] = id++;
     for (auto &e : graph.neighbors(v))
     {
-        id = compute_dfs_order_rec(graph, mapping, id, e.id);
+        id = compute_dfs_order_rec(graph, mapping, id, e.get_id());
     }
     return id;
 }
@@ -96,6 +98,8 @@ template <typename EdgeType>
 struct AdjacencyArray
 {
     using IteratorType = std::vector<EdgeType>::iterator;
+
+    AdjacencyArray() {}
 
     AdjacencyArray(AdjacencyList<EdgeType> &graph)
     {
