@@ -8,39 +8,6 @@
 #include "trie.h"
 #include "common.h"
 
-struct CharCounter
-{
-    CharCounter() : counter(26) {}
-
-    CharCounter(std::string &s) : counter(26)
-    {
-        for (char c : s)
-        {
-            increment(c);
-        }
-    }
-
-    inline int char_to_int(char c) { return c - 'a'; }
-
-    inline void decrement(char c)
-    {
-        int i = char_to_int(c);
-        counter[i]--;
-    }
-    inline void increment(char c)
-    {
-        int i = char_to_int(c);
-        counter[i]++;
-    }
-
-    inline int get_count(char c)
-    {
-        int i = char_to_int(c);
-        return counter[i];
-    }
-
-    std::vector<int> counter;
-};
 
 struct WordChallenge
 {

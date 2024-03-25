@@ -3,7 +3,9 @@
 #include <vector>
 #include <string>
 #include <numeric>
+#include <ios>
 
+#include "common.h"
 #include "trie.h"
 #include "measure_time.h"
 #include "io.h"
@@ -11,7 +13,7 @@
 #include "graph.h"
 #include "static_trie.h"
 #include "word_challenge.h"
-#include "common.h"
+#include "wordle.h"
 
 double mean(std::vector<int> &v)
 {
@@ -157,8 +159,16 @@ void benchmark_word_challenge(WordList &words)
     }
 }
 
+void color_print_test()
+{
+    std::string s = "TEST";
+    WordleHint hint = {WordleHintChar::CORRECT_POSITION, WordleHintChar::DIFFERENT_POSITION, WordleHintChar::DOES_NOT_OCCUR, WordleHintChar::CORRECT_POSITION};
+    print_colorful_hint(hint, s);
+}
+
 int main()
 {
+
     std::cout << "Hello Wordle!"
               << "\n";
 
@@ -168,16 +178,13 @@ int main()
     std::cout << "number of words: " << words.size() << "\n";
 
     // benchmark(words);
-    benchmark_word_challenge(words);
+    // benchmark_word_challenge(words);
 
     // WordChallenge wc(words);
-    // std::string s = "alert";
+    // std::string s = "abnormal";
     // CharCounter counter(s);
-    // auto w = wc.possible_words(counter);
-    // for (auto s : w)
-    // {
-    //     std::cout << s << "\n";
-    // }
-    // std::cout << "found " << w.size() << " words"
+    // auto idx = wc.possible_words(counter);
+    // print_indexed_words(idx, words);
+    // std::cout << "found " << idx.size() << " words"
     //           << "\n";
 }
