@@ -45,4 +45,5 @@ struct StaticTrieGraph
     }
 
     AdjacencyArray<EdgeType> graph;
+    int visited_nodes;
 };

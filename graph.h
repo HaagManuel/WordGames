@@ -22,30 +22,30 @@ struct AdjacencyList
 
     IteratorWrapper<IteratorType> neighbors(int v)
     {
-        return IteratorWrapper<IteratorType>(graph[v].begin(), graph[v].end());
+        return IteratorWrapper<IteratorType>(edges[v].begin(), edges[v].end());
     }
 
-    inline int num_nodes() const { return graph.size(); }
-    inline int degree(int v) const { return graph[v].size(); }
+    inline int num_nodes() const { return edges.size(); }
+    inline int degree(int v) const { return edges[v].size(); }
 
-    std::vector<std::vector<EdgeType>> graph;
+    std::vector<std::vector<EdgeType>> edges;
 };
 
-template <typename T>
-AdjacencyList<T> remap_graph(AdjacencyList<T> &graph, std::vector<int> &permutation)
+template <typename EdgeType>
+AdjacencyList<EdgeType> remap_graph(AdjacencyList<EdgeType> &graph, std::vector<int> &permutation)
 {
-    std::vector<T> remapped_graph(graph.size());
+    std::vector<std::vector<EdgeType>> remapped_graph(graph.num_nodes());
 
     // map position in array
-    for (uint v = 0; v < graph.size(); v++)
+    for (int v = 0; v < graph.num_nodes(); v++)
     {
-        remapped_graph[permutation[v]] = graph[v];
+        remapped_graph[permutation[v]] = graph.edges[v];
     }
 
     // map edge ids
-    for (uint v = 0; v < graph.size(); v++)
+    for (int v = 0; v < graph.num_nodes(); v++)
     {
-        for (uint i = 0; i < graph[v].size(); i++)
+        for (uint i = 0; i < remapped_graph[v].size(); i++)
         {
             remapped_graph[v][i].id = permutation[remapped_graph[v][i].id];
         }

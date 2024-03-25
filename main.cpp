@@ -10,13 +10,15 @@
 #include "small_map.h"
 #include "graph.h"
 #include "static_trie.h"
+#include "word_challenge.h"
+#include "common.h"
 
 double mean(std::vector<int> &v)
 {
     return (double)std::accumulate(v.begin(), v.end(), 0) / v.size();
 }
 
-void benchmark(std::vector<std::string> &words)
+void benchmark(WordList &words)
 {
     std::vector<int> times1;
     std::vector<int> times2;
@@ -110,6 +112,49 @@ void benchmark(std::vector<std::string> &words)
     std::cout << checksum << "\n";
 }
 
+void benchmark_word_challenge(WordList &words)
+{
+    int repeats = 1000;
+    int seed = 0;
+    srand(seed);
+    WordChallenge wc(words);
+    std::vector<std::vector<int>> index_len = index_word_of_len(words);
+    int min_len = 3;
+
+    int checksum = 0;
+    auto run = [&](int len)
+    {
+        for (int i = 0; i < repeats; i++)
+        {
+            int j = rand() % index_len[len].size();
+            int word_idx = index_len[len][j];
+            CharCounter counter(words[word_idx]);
+            auto result = wc.possible_words(counter);
+            checksum ^= result.front()[0];
+        }
+    };
+
+    std::cout << "time word challenge: \n";
+    for (uint len = min_len; len < index_len.size(); len++)
+    {
+        if (index_len[len].size() >= 100)
+        {
+            wc.reset_counter();
+            auto f = [&]()
+            {
+                run(len);
+            };
+
+            double timeMs = (double)measureTimeMs(f) / repeats;
+            double avg_visited_nodes = wc.get_num_visited_nodes() / repeats;
+            std::cout << "avg visited nodes " << avg_visited_nodes << ", ";
+            std::cout << "length " << len << ": " << timeMs << "ms"
+                      << "\n";
+        }
+    }
+    std::cout << checksum << "\n";
+}
+
 int main()
 {
     std::cout << "Hello Wordle!"
@@ -117,8 +162,20 @@ int main()
 
     // std::string file = "../dictionary_9030.txt";
     std::string file = "../dictionary_large.txt";
-    auto words = io::read_dictionary(file);
+    WordList words = io::read_dictionary(file);
     std::cout << "number of words: " << words.size() << "\n";
 
-    benchmark(words);
+    // benchmark(words);
+    benchmark_word_challenge(words);
+
+    // WordChallenge wc(words);
+    // std::string s = "alert";
+    // CharCounter counter(s);
+    // auto w = wc.possible_words(counter);
+    // for (auto s : w)
+    // {
+    //     std::cout << s << "\n";
+    // }
+    // std::cout << "found " << w.size() << " words"
+    //           << "\n";
 }
