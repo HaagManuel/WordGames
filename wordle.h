@@ -1,10 +1,12 @@
 #pragma once
 
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "common.h"
 #include "trie.h"
+#include "random.h"
 
 enum WordleHintChar
 {
@@ -28,13 +30,12 @@ void print_colorful_hint(WordleHint &hint, std::string &word)
 
 struct Wordle
 {
-    Wordle(WordList &_words) : words(_words), trie(words), counter(), number_of_guesses(0) {}
+    Wordle(WordList &_words) : words(_words), trie(words), counter() {}
 
     void get_wordle_hint(WordleHint &hints, std::string &guess)
     {
         assert(hints.size() == guess.size());
         int n = hints.size();
-        number_of_guesses++;
 
         for (int i = 0; i < n; i++)
         {
@@ -57,7 +58,6 @@ struct Wordle
     void set_word(std::string s)
     {
         secret_word = s;
-        number_of_guesses = 0;
         counter.new_counter(s);
     }
 
@@ -65,13 +65,10 @@ struct Wordle
 
     bool is_secret_word(std::string &s) const { return s == secret_word; }
 
-    int get_number_of_guesses() const { return number_of_guesses; }
-
     WordList &words;
     Trie trie;
     CharCounter counter;
     std::string secret_word;
-    int number_of_guesses;
 };
 
 // chooses a random word from the set of possible words
@@ -86,10 +83,10 @@ struct RandomWordleGuesser
         // graph = AdjacencyArray<EdgeType>::construct_with_bfs_order(adj_list);
 
         node_to_word_index = StaticTrieGraph<EdgeType>(words, graph).construct_node_to_word_index(words);
-        words_of_len = index_word_of_len(words);
+        words_of_len = compute_index_word_of_len(words);
     }
 
-    void reset(int _word_len)
+    void new_word(int _word_len)
     {
         assert(words_of_len[_word_len].size() > 0);
 
@@ -100,7 +97,7 @@ struct RandomWordleGuesser
         not_occuring_letter.reset_counter();
     }
 
-    void give_hint(WordleHint &hint, std::string &guessed_word)
+    void take_hint(WordleHint &hint, std::string &guessed_word)
     {
         for (uint i = 0; i < hint.size(); i++)
         {
@@ -126,23 +123,23 @@ struct RandomWordleGuesser
         // guess random word from all possible
         // TODO make better, word with many different common letters
         number_of_guesses++;
+        visited_nodes = 0;
+        canditate_size = 0;
         if (number_of_guesses == 1)
         {
-            int i = rand() % words_of_len[word_len].size();
+            int i = gen.random_index(words_of_len[word_len].size());
             int j = words_of_len[word_len][i];
             return words[j];
-        }
-        visited_nodes = 0;
+                }
         found_letters.reset_counter();
         search_rec(0, 0, false);
 
-        int m = canditate_index.size();
-        assert(m > 0);
+        canditate_size = canditate_index.size();
+        assert(canditate_size > 0);
 
-        int i = rand() % m;
+        int i = gen.random_index(canditate_size);
         int j = canditate_index[i];
         canditate_index.clear();
-        std::cout << "candidate size: " << m << "\n";
 
         return words[j];
     }
@@ -220,9 +217,11 @@ struct RandomWordleGuesser
     }
 
     int get_visited_nodes() const { return visited_nodes; }
+    int get_canditate_size() const { return canditate_size; }
 
     const char UNKNOWN = '?';
     int visited_nodes;
+    int canditate_size;
 
     std::vector<int> canditate_index;
 
@@ -233,41 +232,121 @@ struct RandomWordleGuesser
     int word_len;
     int number_of_guesses;
 
+    RandomGenerator gen;
     WordList &words;
     AdjacencyArray<TrieEdge> graph;
     std::vector<int> node_to_word_index;
     std::vector<std::vector<int>> words_of_len;
 };
 
-void auto_play_wordle(WordList &words)
+struct WordleSimulation
 {
-    int seed = 6;
-    srand(seed);
+    WordleSimulation(WordList &_words, int _max_guesses, int seed) : words(_words), wordle(words), gen(seed), guesser(words), max_guesses(_max_guesses) {}
 
-    Wordle wordle(words);
-    RandomWordleGuesser guesser(words);
-
-    int m = words.size();
-
-    std::string secret_word = words[rand() % m];
-    WordleHint hint(secret_word.size(), WordleHintChar::EMPTY);
-
-    std::cout << "secret word: " << secret_word << "\n";
-    wordle.set_word(secret_word);
-
-    guesser.reset(secret_word.size());
-
-    for (int i = 0; i < 10; i++)
+    void reset_logging()
     {
-        std::string guess = guesser.make_guess();
-        std::cout << "visited " << guesser.get_visited_nodes() << " nodes \n";
-        if (wordle.is_secret_word(guess))
-        {
-            std::cout << "found secret word \n";
-            return;
-        }
-        wordle.get_wordle_hint(hint, guess);
-        guesser.give_hint(hint, guess);
-        print_colorful_hint(hint, guess);
+        num_guesses = 0;
+        visited_nodes.clear();
+        canditate_size.clear();
+        vec_num_guess.clear();
     }
-}
+
+    std::tuple<std::vector<int>, std::vector<std::vector<int>>, std::vector<std::vector<int>>> get_log_data()
+    {
+        std::vector<int> log_guesses = vec_num_guess;
+        std::vector<std::vector<int>> log_visited;
+        std::vector<std::vector<int>> log_canditates;
+        int k = 0;
+        auto it_v = visited_nodes.begin();
+        auto it_c = canditate_size.begin();
+        for (auto guesses : log_guesses)
+        {
+            assert(k + guesses <= (int)visited_nodes.size());
+            assert(k + guesses <= (int)canditate_size.size());
+            std::vector<int> vis(it_v + k, it_v + k + guesses);
+            std::vector<int> cand(it_c + k, it_c + k + guesses);
+            k += guesses;
+            log_visited.push_back(vis);
+            log_canditates.push_back(cand);
+        }
+        return {log_guesses, log_visited, log_canditates};
+    }
+
+    void reset()
+    {
+        num_guesses = 0;
+        hint.resize(secret_word.size(), WordleHintChar::EMPTY);
+    }
+
+    // returns true if word was found in <= max_guesses
+    template <bool debug = false>
+    bool play_one_round(std::string _secret_word)
+    {
+        bool found_word = false;
+        secret_word = _secret_word;
+        reset();
+        guesser.new_word(secret_word.size());
+        wordle.set_word(secret_word);
+
+        if constexpr (debug)
+            std::cout << "secret word: " << secret_word << "\n";
+
+        for (int i = 0; i < max_guesses; i++)
+        {
+            num_guesses++;
+            std::string guess = guesser.make_guess();
+            int visited = guesser.get_visited_nodes();
+            int canditates = guesser.get_canditate_size();
+            visited_nodes.push_back(visited);
+            canditate_size.push_back(canditates);
+            if constexpr (debug)
+            {
+                std::cout << "visited nodes: " << visited << "\n";
+                std::cout << "candiates: " << canditates << "\n";
+            }
+            if (wordle.is_secret_word(guess))
+            {
+                found_word = true;
+                break;
+            }
+            wordle.get_wordle_hint(hint, guess);
+            guesser.take_hint(hint, guess);
+            if constexpr (debug)
+            {
+                print_colorful_hint(hint, guess);
+            }
+        }
+        if constexpr (debug)
+        {
+            if (found_word)
+            {
+                std::cout << "found secret word: ";
+                color_print(secret_word, GREEN);
+            }
+            else
+            {
+                std::cout << "failed to find word after " << max_guesses << " guesses\n";
+                color_print(secret_word, RED);
+            }
+            std::cout << "\n";
+            std::string banner(20, '#');
+            std::cout << banner << "\n\n";
+        }
+        vec_num_guess.push_back(num_guesses);
+        return found_word;
+    }
+
+    WordList words;
+    Wordle wordle;
+    RandomGenerator gen;
+    RandomWordleGuesser guesser;
+
+    std::string secret_word;
+    WordleHint hint;
+    int max_guesses;
+
+    int num_guesses;
+    std::vector<int> vec_num_guess;
+    std::vector<int> visited_nodes;
+    std::vector<int> canditate_size;
+};

@@ -4,6 +4,7 @@
 #include <string>
 #include <cassert>
 #include <iostream>
+#include <iomanip>
 
 using WordList = std::vector<std::string>;
 
@@ -30,7 +31,38 @@ void color_print(char c, std::string color)
     std::cout << color << c << RESET;
 }
 
-std::vector<std::vector<int>> index_word_of_len(WordList &words)
+void print_word_statistics(WordList &words)
+{
+    std::vector<int> word_len_counter(100, 0);
+    for (auto &s : words)
+    {
+        word_len_counter[s.size()]++;
+    }
+    while (word_len_counter.back() == 0)
+        word_len_counter.pop_back();
+
+    std::cout << "number of words of length"
+              << "\n";
+    for (uint i = 0; i < word_len_counter.size(); i++)
+    {
+        std::cout << word_len_counter[i] << " ";
+    }
+    std::cout << "\n";
+    std::cout << "total: " << words.size() << "\n";
+    std::cout << "\n";
+}
+
+template <typename T>
+void print_vector(std::vector<T> &vec)
+{
+    for (auto &x : vec)
+    {
+        std::cout << x << " ";
+    }
+    std::cout << "\n";
+}
+
+std::vector<std::vector<int>> compute_index_word_of_len(WordList &words)
 {
     std::vector<std::vector<int>> index_len(MAX_WORD_LEN + 1);
 

@@ -20,19 +20,18 @@ int main()
     std::cout << "Hello Wordle!"
               << "\n";
 
-
-    // std::string file = "../dictionary_9030.txt";
-    std::string file = "../dictionary_large.txt";
+    std::string file = "../dictionary_9030.txt";
+    // std::string file = "../dictionary_large.txt";
     WordList words = io::read_dictionary(file);
-    std::cout << "number of words: " << words.size() << "\n";
 
+    print_word_statistics(words);
 
-    benchmark_trie_by_word_length<Trie>(words, "Trie");
-    benchmark_trie_by_word_length<TrieArray>(words, "TrieArray");
-    benchmark_trie_by_word_length<StaticTrieGraph<TrieEdge>>(words, "StaticTrie");
-    benchmark_trie_by_word_length<StaticTrieGraph<CompressedTrieEdge>>(words, "StaticTrie Compressed Edge");
-    
-    benchmark_word_challenge(words);
+    // benchmark_trie_by_word_length<Trie>(words, "Trie");
+    // benchmark_trie_by_word_length<TrieArray>(words, "TrieArray");
+    // benchmark_trie_by_word_length<StaticTrieGraph<TrieEdge>>(words, "StaticTrie");
+    // benchmark_trie_by_word_length<StaticTrieGraph<CompressedTrieEdge>>(words, "StaticTrie Compressed Edge");
 
-    // auto_play_wordle(words);
+    // benchmark_word_challenge(words);
+
+    benchmark_wordle(words);
 }
