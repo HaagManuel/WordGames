@@ -47,7 +47,8 @@ AdjacencyList<EdgeType> remap_graph(AdjacencyList<EdgeType> &graph, std::vector<
     {
         for (uint i = 0; i < remapped_graph[v].size(); i++)
         {
-            remapped_graph[v][i].id = permutation[remapped_graph[v][i].id];
+            int new_id = permutation[remapped_graph[v][i].get_id()];
+            remapped_graph[v][i].set_id(new_id);
         }
     }
     return AdjacencyList{remapped_graph};
@@ -121,6 +122,20 @@ struct AdjacencyArray
                 edges.push_back(e);
             }
         }
+    }
+
+    static AdjacencyArray construct_with_bfs_order(AdjacencyList<EdgeType> &graph)
+    {
+        auto order = compute_bfs_order(graph, 0);
+        auto rearranged = remap_graph(graph, order);
+        return AdjacencyArray(rearranged);
+    }
+
+    static AdjacencyArray construct_with_dfs_order(AdjacencyList<EdgeType> &graph)
+    {
+        auto order = compute_dfs_order(graph, 0);
+        auto rearranged = remap_graph(graph, order);
+        return AdjacencyArray(rearranged);
     }
 
     inline int num_nodes() const { return nodes.size() - 1; }

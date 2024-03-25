@@ -34,7 +34,7 @@ std::vector<T> concat_vectors(std::vector<std::vector<T>> &vectors)
         total_size += vec.size();
     }
     merged.reserve(total_size);
-    
+
     for (auto &vec : vectors)
     {
         merged.insert(merged.end(), vec.begin(), vec.end());

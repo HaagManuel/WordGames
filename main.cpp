@@ -121,7 +121,7 @@ void benchmark_word_challenge(WordList &words)
     std::vector<std::vector<int>> index_len = index_word_of_len(words);
     int min_len = 3;
 
-    int checksum = 0;
+    int num_words = 0;
     auto run = [&](int len)
     {
         for (int i = 0; i < repeats; i++)
@@ -130,7 +130,7 @@ void benchmark_word_challenge(WordList &words)
             int word_idx = index_len[len][j];
             CharCounter counter(words[word_idx]);
             auto result = wc.possible_words(counter);
-            checksum ^= result.front()[0];
+            num_words += result.size();
         }
     };
 
@@ -140,6 +140,7 @@ void benchmark_word_challenge(WordList &words)
         if (index_len[len].size() >= 100)
         {
             wc.reset_counter();
+            num_words = 0;
             auto f = [&]()
             {
                 run(len);
@@ -147,12 +148,13 @@ void benchmark_word_challenge(WordList &words)
 
             double timeMs = (double)measureTimeMs(f) / repeats;
             double avg_visited_nodes = wc.get_num_visited_nodes() / repeats;
+            double avg_result = num_words / repeats;
             std::cout << "avg visited nodes " << avg_visited_nodes << ", ";
+            std::cout << "avg result size " << avg_result << ", ";
             std::cout << "length " << len << ": " << timeMs << "ms"
                       << "\n";
         }
     }
-    std::cout << checksum << "\n";
 }
 
 int main()

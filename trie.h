@@ -12,11 +12,14 @@
 
 struct TrieEdge
 {
+    TrieEdge() : id(0), letter('a'), node_is_word(false) {}
     TrieEdge(uint32_t _id, char _letter, bool _node_is_a_word) : id(_id), letter(_letter), node_is_word(_node_is_a_word) {}
 
     int get_id() const { return id; }
     char get_letter() const { return letter; }
     bool is_word() const { return node_is_word; }
+
+    int set_id(int new_id) { return id = new_id; }
 
     int id;
     char letter;
@@ -27,6 +30,7 @@ struct CompressedTrieEdge
     // 1 bit bool, 8 bit char, 23 bit index
     // 2^23 = 8_388_608 max index
 
+    CompressedTrieEdge() : edge(0) {}
     CompressedTrieEdge(uint32_t id, char letter, bool is_a_word)
     {
         edge = 0;
@@ -43,6 +47,12 @@ struct CompressedTrieEdge
     uint32_t get_id() const { return edge & ID_MASK; }
     char get_letter() const { return (edge >> 23) & CHAR_MASK; }
     bool is_word() const { return (edge >> 31) & 1; }
+
+    void set_id(uint32_t new_id)
+    {
+        edge &= ~ID_MASK;
+        edge |= new_id;
+    }
 
     uint32_t edge;
     static constexpr uint32_t ID_MASK = (1 << 23) - 1;

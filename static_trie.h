@@ -5,17 +5,48 @@
 #include <cassert>
 #include <cstdint>
 
+#include "common.h"
 #include "graph.h"
 #include "trie.h"
 
 template <typename EdgeType>
 struct StaticTrieGraph
 {
-    StaticTrieGraph(std::vector<std::string> &words)
+    StaticTrieGraph(WordList &words)
     {
         Trie trie(words);
         AdjacencyList<EdgeType> adj_list = trie.extract_graph<EdgeType>();
-        graph = AdjacencyArray(adj_list);
+        graph = AdjacencyArray<EdgeType>::construct_with_dfs_order(adj_list);
+    }
+
+    std::vector<int> construct_node_to_word_index(WordList &words)
+    {
+        std::vector<int> node_to_word_index(graph.num_nodes(), -1);
+        for (uint i = 0; i < words.size(); i++)
+        {
+            int v = find_node(words[i]);
+            node_to_word_index[v] = i;
+        }
+        return node_to_word_index;
+    }
+
+    // assumes trie constains word
+    int find_node(std::string &s)
+    {
+        uint32_t v = 0;
+        for (char c : s)
+        {
+            for (auto &e : graph.neighbors(v))
+            {
+                char l = e.get_letter();
+                if (l == c)
+                {
+                    v = e.get_id();
+                    break;
+                }
+            }
+        }
+        return v;
     }
 
     bool contains_word(std::string &s)
@@ -45,5 +76,4 @@ struct StaticTrieGraph
     }
 
     AdjacencyArray<EdgeType> graph;
-    int visited_nodes;
 };
