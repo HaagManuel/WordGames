@@ -63,6 +63,7 @@ void wordle_application(Config &config)
     }
     else if (config.game_mode_wordle == "keeper")
     {
+        app.play_as_keeper(config.word_length, config.max_guesses);
     }
     else
     {
@@ -136,6 +137,8 @@ void run_benchmarks(WordList &words)
 
     benchmark_wordle(words);
 }
+
+#include <sstream>
 
 int main(int argc, char *argv[])
 {

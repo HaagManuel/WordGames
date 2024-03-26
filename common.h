@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <sstream>
 #include <cassert>
 #include <iostream>
 #include <iomanip>
@@ -22,6 +23,12 @@ static const std::string BLUE = "\033[34m";
 static const std::string MAGENTA = "\033[35m";
 static const std::string CYAN = "\033[36m";
 static const std::string WHITE = "\033[37m";
+
+void color_print(std::stringstream &ss, std::string color)
+{
+    std::cout << color << ss.str() << RESET;
+    ss.str("");
+}
 
 void color_print(std::string text, std::string color)
 {

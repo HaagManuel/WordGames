@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 #include <tuple>
 #include <vector>
 
@@ -75,12 +76,11 @@ struct Wordle
 struct RandomWordleGuesser
 {
     using EdgeType = TrieEdge;
-    RandomWordleGuesser(WordList &_words) : words(_words)
+    RandomWordleGuesser(WordList &_words, int seed) : words(_words), gen(seed)
     {
         Trie trie(words);
         AdjacencyList<EdgeType> adj_list = trie.extract_graph<EdgeType>();
         graph = AdjacencyArray<EdgeType>::construct_with_dfs_order(adj_list);
-        // graph = AdjacencyArray<EdgeType>::construct_with_bfs_order(adj_list);
 
         node_to_word_index = StaticTrieGraph<EdgeType>(words, graph).construct_node_to_word_index(words);
         words_of_len = compute_index_word_of_len(words);
@@ -123,13 +123,9 @@ struct RandomWordleGuesser
         // guess random word from all possible
         number_of_guesses++;
         visited_nodes = 0;
-        canditate_size = 0;
+        canditate_size = words.size();
         if (number_of_guesses == 1)
         {
-            // test
-            // if(word_len == 3) {
-            //     return "eat";
-            // }
             int i = gen.random_index(words_of_len[word_len].size());
             int j = words_of_len[word_len][i];
             return words[j];
@@ -138,10 +134,14 @@ struct RandomWordleGuesser
         search_rec(0, 0, false);
 
         canditate_size = canditate_index.size();
+        if (canditate_size == 0)
+        {
+            int j = gen.random_element(words_of_len[word_len]);
+            return words[j];
+        }
         assert(canditate_size > 0);
 
-        int i = gen.random_index(canditate_size);
-        int j = canditate_index[i];
+        int j = gen.random_element(canditate_index);
         canditate_index.clear();
 
         return words[j];
@@ -235,8 +235,8 @@ struct RandomWordleGuesser
     int word_len;
     int number_of_guesses;
 
-    RandomGenerator gen;
     WordList &words;
+    RandomGenerator gen;
     AdjacencyArray<TrieEdge> graph;
     std::vector<int> node_to_word_index;
     std::vector<std::vector<int>> words_of_len;
@@ -244,7 +244,8 @@ struct RandomWordleGuesser
 
 struct WordleSimulation
 {
-    WordleSimulation(WordList &_words, int _max_guesses, int seed) : words(_words), wordle(words), gen(seed), guesser(words), max_guesses(_max_guesses) {}
+    // give guesser a different, otherwise he will guess the word with the first guess
+    WordleSimulation(WordList &_words, int _max_guesses, int seed) : words(_words), wordle(words), gen(seed), guesser(words, seed + 1), max_guesses(_max_guesses) {}
 
     void reset_logging()
     {
@@ -357,7 +358,7 @@ struct WordleSimulation
 void find_best_start_word(WordList &words, int len)
 {
     Wordle wordle(words);
-    RandomWordleGuesser guesser(words);
+    RandomWordleGuesser guesser(words, 41);
     std::vector<std::vector<int>> words_of_len = compute_index_word_of_len(words);
 
     RandomGenerator gen(5);
@@ -420,7 +421,78 @@ void find_best_start_word(WordList &words, int len)
 
 struct WordleApplication
 {
-    WordleApplication(WordList &_words, int seed) : words(_words), wordle(words), word_gen(words, seed) {}
+    // guesser must have different seed than word generation, otherwise he will guess it in the first try
+    WordleApplication(WordList &_words, int seed) : words(_words), wordle(words), word_gen(words, seed), guesser(words, seed + 1) {}
+
+    bool check_word(uint word_length, std::string &guess)
+    {
+        if (!io::word_is_lower(guess) || guess.size() != word_length)
+        {
+            std::string msg3 = "word must be in [a-z] and have exactly length " + std::to_string(word_length) + "\n";
+            color_print(msg3, YELLOW);
+            return false;
+        }
+        if (!wordle.is_valid_word(guess))
+        {
+            std::string msg4 = guess + " is not a valid word from the dictionary \n";
+            color_print(msg4, YELLOW);
+            return false;
+        }
+        return true;
+    }
+
+    bool check_hint(uint word_length, std::string &hint)
+    {
+        bool ok = hint.size() == word_length;
+        for (char c : hint)
+        {
+            ok &= c >= '0' && c <= '2';
+        }
+        if (!ok)
+        {
+            std::string msg = "hint must consists of exactly " + std::to_string(word_length) + " digits from [0-2]\n";
+            color_print(msg, YELLOW);
+            return false;
+        }
+        return true;
+    }
+
+    WordleHint parse_wordle_hint(std::string &input)
+    {
+        WordleHint hint;
+        for (char c : input)
+        {
+            if (c == '0')
+            {
+                hint.push_back(WordleHintChar::DOES_NOT_OCCUR);
+            }
+            else if (c == '1')
+            {
+                hint.push_back(WordleHintChar::DIFFERENT_POSITION);
+            }
+            else
+            {
+                hint.push_back(WordleHintChar::CORRECT_POSITION);
+            }
+        }
+        return hint;
+    }
+
+    void report_found_word(std::string &secret_word, int num_guesses)
+    {
+        std::string msg = "\nfound secret word after " + std::to_string(num_guesses) + " guesses\n";
+        color_print(msg, YELLOW);
+        color_print(secret_word, GREEN);
+        std::cout << "\n";
+    }
+
+    void report_failed_to_find(std::string &secret_word, int num_guesses)
+    {
+        std::string msg = "\nfailed to find word after " + std::to_string(num_guesses) + " guesses\n";
+        color_print(msg, YELLOW);
+        color_print(secret_word, RED);
+        std::cout << "\n";
+    }
 
     void play_as_guesser(uint word_length, uint max_guesses)
     {
@@ -438,35 +510,20 @@ struct WordleApplication
             uint remaining_guesses = max_guesses - num_guesses;
             std::string msg2 = "guesses left:" + std::to_string(remaining_guesses) + "\n";
             color_print(msg2, BLUE);
-            
+
             std::string guess = io::get_user_input();
-            if (!io::word_is_lower(guess) || guess.size() != word_length)
-            {
-                std::string msg3 = "word must be in [a-z] and have exactly length " + std::to_string(word_length) + "\n";
-                color_print(msg3, YELLOW);
+            if (!check_word(word_length, guess))
                 continue;
-            }
-            if (!wordle.is_valid_word(guess))
-            {
-                std::string msg4 = guess + " is not a valid word from the dictionary \n";
-                color_print(msg4, YELLOW);
-                continue;
-            }
+
             num_guesses++;
             if (wordle.is_secret_word(guess))
             {
-                std::string msg = "\nfound secret word after " + std::to_string(num_guesses) + " guesses\n";
-                color_print(msg, YELLOW);
-                color_print(secret_word, GREEN);
-                std::cout << "\n";
+                report_found_word(secret_word, num_guesses);
                 return;
             }
             if (num_guesses == max_guesses)
             {
-                std::string msg = "\nfailed to find word after " + std::to_string(max_guesses) + " guesses\n";
-                color_print(msg, YELLOW);
-                color_print(secret_word, RED);
-                std::cout << "\n";
+                report_failed_to_find(secret_word, num_guesses);
                 return;
             }
             wordle.get_wordle_hint(hint, guess);
@@ -474,15 +531,65 @@ struct WordleApplication
         }
     }
 
-    void play_as_keeper()
+    void play_as_keeper(uint word_length, uint max_guesses)
     {
+        std::stringstream ss;
+        ss << "think of a word with " << word_length << " letters. It must be in the dictionary.\n";
+        color_print(ss, YELLOW);
+
+        guesser.new_word(word_length);
+        uint num_guesses = 0;
+        WordleHint correct(word_length, WordleHintChar::CORRECT_POSITION);
+        while (true)
+        {
+            std::string guess = guesser.make_guess();
+            num_guesses++;
+
+            int visited_nodes = guesser.get_visited_nodes();
+            int canditates = guesser.get_canditate_size();
+            if (canditates == 0)
+            {
+                ss << "no candiates anymore\n";
+                color_print(ss, YELLOW);
+                return;
+            }
+            ss << "\n"
+               << "visited nodes: " << visited_nodes << "\n"
+               << "candiates: " << canditates << "\n";
+            color_print(ss, MAGENTA);
+
+            std::string input;
+            do
+            {
+                std::cout << "guess: ";
+                color_print(guess + "\n", BLUE);
+                input = io::get_user_input();
+
+            } while (!check_hint(word_length, input));
+
+            WordleHint hint = parse_wordle_hint(input);
+            if (hint == correct)
+            {
+                report_found_word(guess, num_guesses);
+                return;
+            }
+            print_colorful_hint(hint, guess);
+            if (num_guesses == max_guesses)
+            {
+                std::string word(' ', 1);
+                report_failed_to_find(word, num_guesses);
+            }
+            guesser.take_hint(hint, guess);
+        }
     }
 
     void play_automatic()
     {
+        // TODO
     }
 
     WordList &words;
     Wordle wordle;
     RandomWordGenerator word_gen;
+    RandomWordleGuesser guesser;
 };

@@ -170,25 +170,11 @@ void benchmark_wordle(WordList &words)
         std::cout << "avg time per game: " << avg_time << " " << unit << "\n";
         std::cout << "avg_guesses: " << avg_guesses << "\n";
 
-        // print_vector(visited[0]);
-        // print_vector(visited[1]);
-        // print_vector(canditates[0]);
-        // print_vector(canditates[1]);
-        
         std::cout << "visited ";
         print_vector(avg_visited);
         std::cout << "canditates ";
         print_vector(avg_canditates);
 
-        // for (auto x : avg_visited)
-        // {
-        //     std::cout << std::fixed << std::setprecision(0) << x << " ";
-        // }
-        // std::cout << "\n";
-        // for (auto x : avg_canditates)
-        // {
-        //     std::cout << std::fixed << std::setprecision(0) << x << " ";
-        // }
         std::cout << "\n";
         std::cout << "\n";
     }
