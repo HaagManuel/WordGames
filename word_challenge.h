@@ -9,6 +9,7 @@
 #include "common.h"
 #include "measure_time.h"
 #include "random.h"
+#include "io.h"
 
 struct WordChallenge
 {
@@ -84,7 +85,7 @@ struct WordChallenge
 
 struct WordChallengeApplication
 {
-    WordChallengeApplication(WordList &words, int seed) : word_challenge(words), word_gen(words, seed) {}
+    WordChallengeApplication(WordList &_words, int seed) : words(_words), word_challenge(words), word_gen(words, seed) {}
 
     void play_auto_mode(int repeats, int word_length)
     {
@@ -119,6 +120,28 @@ struct WordChallengeApplication
         std::cout << "average words found           : " << avg_words << "\n";
     }
 
+    void play_interactive()
+    {
+        CharCounter counter;
+        while (true)
+        {
+            std::string input = io::get_user_input();
+            if (!io::word_is_lower(input))
+            {
+                std::cout << input << " is not full lowercase \n";
+                continue;
+            }
+            counter.new_counter(input);
+            auto indices = word_challenge.possible_words(counter);
+            std::cout << "\n";
+            print_indexed_words(indices, words);
+            std::cout << "\n"
+                      << "found " << indices.size() << " words"
+                      << "\n";
+        }
+    }
+
+    WordList &words;
     WordChallenge word_challenge;
     RandomWordGenerator word_gen;
 };

@@ -14,7 +14,7 @@
 
 #include "CLI/CLI.hpp"
 
-#define SHOW_ARGUMENT(x) std::cout << std::setfill(' ') << std::setw(16) << std::string(#x " = ") << (x) << "\n";
+#define SHOW_ARGUMENT(x) std::cout << std::setfill(' ') << std::setw(30) << std::string(#x " = ") << (x) << "\n";
 
 struct Config
 {
@@ -42,6 +42,10 @@ void word_challenge_application(Config &config)
     if (config.game_mode_word_challenge == "auto")
     {
         app.play_auto_mode(config.repeats, config.word_length);
+    }
+    else
+    {
+        app.play_interactive();
     }
 }
 
@@ -119,7 +123,6 @@ void run_benchmarks(WordList &words)
 
 int main(int argc, char *argv[])
 {
-
     start_cli_application(argc, argv);
     return 0;
 

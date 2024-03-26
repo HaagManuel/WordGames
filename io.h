@@ -6,6 +6,14 @@
 #include <fstream>
 namespace io
 {
+
+    std::string get_user_input()
+    {
+        std::string str;
+        std::getline(std::cin, str);
+        return str;
+    }
+
     bool word_is_lower(std::string &word)
     {
         for (char c : word)
@@ -26,7 +34,7 @@ namespace io
             if (!word_is_lower(s))
             {
                 ok = false;
-                std::cout << s << " is not full lowercase \n";
+                std::cout << s << " is not full lowercase in [a-z]\n";
             }
         }
         return ok;
