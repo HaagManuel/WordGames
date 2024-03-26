@@ -21,6 +21,8 @@ struct Config
     uint word_length;
     uint repeats;
     uint max_guesses;
+    int seed;
+
     std::string game_type;
     std::string game_mode_word_challenge;
     std::string game_mode_wordle;
@@ -29,6 +31,18 @@ struct Config
 
 void word_challenge_application(Config &config)
 {
+    WordList words = io::read_dictionary(config.dictionary_file);
+
+    if (!io::check_word_list(words))
+    {
+        return;
+    }
+
+    WordChallengeApplication app(words, config.seed);
+    if (config.game_mode_word_challenge == "auto")
+    {
+        app.play_auto_mode(config.repeats, config.word_length);
+    }
 }
 
 void wordle_application(Config &config)
@@ -42,6 +56,7 @@ int start_cli_application(int argc, char *argv[])
     uint word_length = 3;
     uint repeats = 10;
     uint max_guesses = 10;
+    int seed = 0;
     std::string game_type = "word_challenge";
     std::string game_mode_word_challenge = "auto";
     std::string game_mode_wordle = "auto";
@@ -54,6 +69,7 @@ int start_cli_application(int argc, char *argv[])
     app.add_option("-l, --word_length", word_length, "word length to be used in game")->check(CLI::Range(1, 100));
     app.add_option("-r, --repeats", repeats, "number of times automatic mode repeats game")->check(CLI::Range(1, 1000000000));
     app.add_option("-g, --max_guesses", max_guesses, "maximal number of guess in wordle game")->check(CLI::Range(1, 1000000000));
+    app.add_option("-s, --seed", max_guesses, "seed for random number generation");
     app.add_option("-t, --game_type", game_type, "select type of game")->check(CLI::IsMember(allowed_game_types));
     app.add_option("-c, --game_mode_word_challenge", game_mode_word_challenge, "game mode in word challenge game")->check(CLI::IsMember(allowed_game_mode_word_challenge));
     app.add_option("-w, --game_mode_wordle", game_mode_wordle, "game mode in wordle game")->check(CLI::IsMember(allowed_game_mode_wordle));
@@ -61,7 +77,7 @@ int start_cli_application(int argc, char *argv[])
 
     CLI11_PARSE(app, argc, argv);
 
-    Config config{word_length, repeats, max_guesses, game_type, game_mode_word_challenge, game_mode_wordle, dictionary_file};
+    Config config{word_length, repeats, max_guesses, seed, game_type, game_mode_word_challenge, game_mode_wordle, dictionary_file};
 
     std::string banner(20, '#');
     std::cout << banner << "\n";
@@ -70,9 +86,11 @@ int start_cli_application(int argc, char *argv[])
     SHOW_ARGUMENT(word_length);
     SHOW_ARGUMENT(repeats);
     SHOW_ARGUMENT(max_guesses);
+    SHOW_ARGUMENT(seed);
     SHOW_ARGUMENT(game_type);
     SHOW_ARGUMENT(game_mode_word_challenge);
     SHOW_ARGUMENT(game_mode_wordle);
+    SHOW_ARGUMENT(dictionary_file);
     std::cout << banner << "\n";
     std::cout << "\n";
 

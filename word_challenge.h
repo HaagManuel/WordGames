@@ -7,7 +7,8 @@
 #include "graph.h"
 #include "trie.h"
 #include "common.h"
-
+#include "measure_time.h"
+#include "random.h"
 
 struct WordChallenge
 {
@@ -79,4 +80,45 @@ struct WordChallenge
     AdjacencyArray<EdgeType> graph;
     std::vector<int> node_to_word_index;
     int visited_nodes;
+};
+
+struct WordChallengeApplication
+{
+    WordChallengeApplication(WordList &words, int seed) : word_challenge(words), word_gen(words, seed) {}
+
+    void play_auto_mode(int repeats, int word_length)
+    {
+        CharCounter counter;
+        std::vector<int> found_words;
+        std::vector<int> word_cnt;
+        word_cnt.reserve(repeats);
+
+        int words_of_len = word_gen.count_words_of_len(word_length);
+        if (words_of_len == 0)
+        {
+            std::cout << "there are no words of length " << word_length << "\n";
+            return;
+        }
+        std::cout << "there are " << words_of_len << " words of length " << word_length << "\n";
+        auto sample_words = word_gen.n_random_words_of_len(repeats, word_length);
+
+        auto run = [&]()
+        {
+            for (int i = 0; i < repeats; i++)
+            {
+                counter.new_counter(sample_words[i]);
+                found_words = word_challenge.possible_words(counter);
+                word_cnt.push_back(found_words.size());
+            }
+        };
+        double avg_time = (double)measureTimeMicroS(run) / repeats;
+        double avg_words = mean(word_cnt);
+
+        std::string unit = "microseconds";
+        std::cout << "average CPU time to find words: " << avg_time << " " << unit << "\n";
+        std::cout << "average words found           : " << avg_words << "\n";
+    }
+
+    WordChallenge word_challenge;
+    RandomWordGenerator word_gen;
 };

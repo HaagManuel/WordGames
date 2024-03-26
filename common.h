@@ -54,6 +54,11 @@ void print_word_statistics(WordList &words)
     std::cout << "\n";
 }
 
+double mean(std::vector<int> &v)
+{
+    return (double)std::accumulate(v.begin(), v.end(), 0) / v.size();
+}
+
 template <typename T>
 void print_vector(std::vector<T> &vec)
 {

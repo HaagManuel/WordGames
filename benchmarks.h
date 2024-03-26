@@ -17,11 +17,6 @@
 #include "word_challenge.h"
 #include "wordle.h"
 
-double mean(std::vector<int> &v)
-{
-    return (double)std::accumulate(v.begin(), v.end(), 0) / v.size();
-}
-
 // if vector is to short compute the mean of remaining vectors
 std::vector<long long> component_wise_mean(std::vector<std::vector<int>> &v)
 {
