@@ -34,4 +34,10 @@ int main()
     // benchmark_word_challenge(words);
 
     benchmark_wordle(words);
+
+    // for (int i = 3; i <= 35; i++)
+    // for (int i = 5; i <= 5; i++)
+    // {
+    // find_best_start_word(words, i);
+    // }
 }

@@ -121,16 +121,19 @@ struct RandomWordleGuesser
     std::string make_guess()
     {
         // guess random word from all possible
-        // TODO make better, word with many different common letters
         number_of_guesses++;
         visited_nodes = 0;
         canditate_size = 0;
         if (number_of_guesses == 1)
         {
+            // test
+            // if(word_len == 3) {
+            //     return "eat";
+            // }
             int i = gen.random_index(words_of_len[word_len].size());
             int j = words_of_len[word_len][i];
             return words[j];
-                }
+        }
         found_letters.reset_counter();
         search_rec(0, 0, false);
 
@@ -350,3 +353,67 @@ struct WordleSimulation
     std::vector<int> visited_nodes;
     std::vector<int> canditate_size;
 };
+
+void find_best_start_word(WordList &words, int len)
+{
+    Wordle wordle(words);
+    RandomWordleGuesser guesser(words);
+    std::vector<std::vector<int>> words_of_len = compute_index_word_of_len(words);
+
+    RandomGenerator gen(5);
+
+    int m = words_of_len[len].size();
+    if (m == 0)
+        return;
+
+    // maybe prune and only look for best
+    int sample_size = 100;
+    std::vector<int> sum_canditates(m, 0);
+    for (int i = 0; i < m; i++)
+    {
+        // for (int j = 0; j < m; j++)
+        for (int j = 0; j < sample_size; j++)
+        {
+            int w1 = words_of_len[len][i];
+            int w2 = gen.random_element(words_of_len[len]);
+            // int w2 = words_of_len[len][j];
+
+            std::string secret_word = words[w1];
+            std::string guess = words[w2];
+            WordleHint hint(len, WordleHintChar::EMPTY);
+
+            wordle.set_word(secret_word);
+            wordle.get_wordle_hint(hint, guess);
+
+            guesser.new_word(len);
+            guesser.take_hint(hint, guess);
+            // first is random guess
+            guesser.make_guess();
+
+            // get canditate size after guessing with words w2 when the word is w1
+            guesser.make_guess();
+            sum_canditates[i] += guesser.get_canditate_size();
+        }
+    }
+
+    std::vector<std::pair<int, std::string>> score_strings;
+    score_strings.reserve(m);
+    for (int i = 0; i < m; i++)
+    {
+        sum_canditates[i] /= sample_size;
+        std::string word = words[words_of_len[len][i]];
+        score_strings.push_back({sum_canditates[i], word});
+    }
+
+    std::sort(score_strings.begin(), score_strings.end());
+    int i = 0;
+    int top = 10;
+    for (auto &[score, word] : score_strings)
+    {
+        std::cout << score << " " << word << "\n";
+        i++;
+        if (i == top)
+            break;
+    }
+    std::cout << "\n";
+}
