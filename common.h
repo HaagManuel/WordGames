@@ -6,6 +6,8 @@
 #include <iostream>
 #include <iomanip>
 
+#define LOG(x) std::cout << std::string(#x " = ") << (x) << "\n";
+
 using WordList = std::vector<std::string>;
 
 static constexpr int MAX_WORD_LEN = 100;
