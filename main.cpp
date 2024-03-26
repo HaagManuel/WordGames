@@ -32,7 +32,6 @@ struct Config
 void word_challenge_application(Config &config)
 {
     WordList words = io::read_dictionary(config.dictionary_file);
-
     if (!io::check_word_list(words))
     {
         return;
@@ -51,6 +50,23 @@ void word_challenge_application(Config &config)
 
 void wordle_application(Config &config)
 {
+    WordList words = io::read_dictionary(config.dictionary_file);
+    if (!io::check_word_list(words))
+    {
+        return;
+    }
+    WordleApplication app(words, config.seed);
+
+    if (config.game_mode_wordle == "guesser")
+    {
+        app.play_as_guesser(config.word_length, config.max_guesses);
+    }
+    else if (config.game_mode_wordle == "keeper")
+    {
+    }
+    else
+    {
+    }
 }
 
 int start_cli_application(int argc, char *argv[])

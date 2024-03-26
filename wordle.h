@@ -55,7 +55,7 @@ struct Wordle
         }
     }
 
-    void set_word(std::string s)
+    void set_secret_word(std::string s)
     {
         secret_word = s;
         counter.new_counter(s);
@@ -289,7 +289,7 @@ struct WordleSimulation
         secret_word = _secret_word;
         reset();
         guesser.new_word(secret_word.size());
-        wordle.set_word(secret_word);
+        wordle.set_secret_word(secret_word);
 
         if constexpr (debug)
             std::cout << "secret word: " << secret_word << "\n";
@@ -382,7 +382,7 @@ void find_best_start_word(WordList &words, int len)
             std::string guess = words[w2];
             WordleHint hint(len, WordleHintChar::EMPTY);
 
-            wordle.set_word(secret_word);
+            wordle.set_secret_word(secret_word);
             wordle.get_wordle_hint(hint, guess);
 
             guesser.new_word(len);
@@ -417,3 +417,72 @@ void find_best_start_word(WordList &words, int len)
     }
     std::cout << "\n";
 }
+
+struct WordleApplication
+{
+    WordleApplication(WordList &_words, int seed) : words(_words), wordle(words), word_gen(words, seed) {}
+
+    void play_as_guesser(uint word_length, uint max_guesses)
+    {
+        uint num_guesses = 0;
+        std::string secret_word = word_gen.random_word_of_length(word_length);
+        WordleHint hint(word_length, WordleHintChar::EMPTY);
+        wordle.set_secret_word(secret_word);
+
+        std::string msg1 = "secret word has " + std::to_string(word_length) + " letters\n";
+        color_print(msg1, YELLOW);
+
+        while (true)
+        {
+            std::cout << "\n";
+            uint remaining_guesses = max_guesses - num_guesses;
+            std::string msg2 = "guesses left:" + std::to_string(remaining_guesses) + "\n";
+            color_print(msg2, BLUE);
+            
+            std::string guess = io::get_user_input();
+            if (!io::word_is_lower(guess) || guess.size() != word_length)
+            {
+                std::string msg3 = "word must be in [a-z] and have exactly length " + std::to_string(word_length) + "\n";
+                color_print(msg3, YELLOW);
+                continue;
+            }
+            if (!wordle.is_valid_word(guess))
+            {
+                std::string msg4 = guess + " is not a valid word from the dictionary \n";
+                color_print(msg4, YELLOW);
+                continue;
+            }
+            num_guesses++;
+            if (wordle.is_secret_word(guess))
+            {
+                std::string msg = "\nfound secret word after " + std::to_string(num_guesses) + " guesses\n";
+                color_print(msg, YELLOW);
+                color_print(secret_word, GREEN);
+                std::cout << "\n";
+                return;
+            }
+            if (num_guesses == max_guesses)
+            {
+                std::string msg = "\nfailed to find word after " + std::to_string(max_guesses) + " guesses\n";
+                color_print(msg, YELLOW);
+                color_print(secret_word, RED);
+                std::cout << "\n";
+                return;
+            }
+            wordle.get_wordle_hint(hint, guess);
+            print_colorful_hint(hint, guess);
+        }
+    }
+
+    void play_as_keeper()
+    {
+    }
+
+    void play_automatic()
+    {
+    }
+
+    WordList &words;
+    Wordle wordle;
+    RandomWordGenerator word_gen;
+};
