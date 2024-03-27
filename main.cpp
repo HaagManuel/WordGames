@@ -5,13 +5,8 @@
 #include <numeric>
 
 #include "benchmarks.h"
-#include "common.h"
-#include "trie.h"
-#include "measure_time.h"
 #include "io.h"
-#include "word_challenge.h"
-#include "wordle.h"
-
+#include "application.h"
 #include "CLI/CLI.hpp"
 
 #define SHOW_ARGUMENT(x) std::cout << std::setfill(' ') << std::setw(30) << std::string(#x " = ") << (x) << "\n";
@@ -67,6 +62,7 @@ void wordle_application(Config &config)
     }
     else
     {
+        app.play_automatic(config.word_length, config.max_guesses, config.repeats);
     }
 }
 
@@ -126,8 +122,14 @@ int start_cli_application(int argc, char *argv[])
     return 0;
 }
 
-void run_benchmarks(WordList &words)
+void run_benchmarks()
 {
+    // std::string file = "../dictionary_9030.txt";
+    std::string file = "../dictionary_large.txt";
+    WordList words = io::read_dictionary(file);
+
+    print_word_statistics(words);
+
     benchmark_trie_by_word_length<Trie>(words, "Trie");
     benchmark_trie_by_word_length<TrieArray>(words, "TrieArray");
     benchmark_trie_by_word_length<StaticTrieGraph<TrieEdge>>(words, "StaticTrie");
@@ -138,23 +140,9 @@ void run_benchmarks(WordList &words)
     benchmark_wordle(words);
 }
 
-#include <sstream>
-
 int main(int argc, char *argv[])
 {
     start_cli_application(argc, argv);
-    return 0;
-
-    std::string file = "../dictionary_9030.txt";
-    // std::string file = "../dictionary_large.txt";
-    WordList words = io::read_dictionary(file);
-
-    print_word_statistics(words);
-
-    // for (int i = 3; i <= 35; i++)
-    // for (int i = 5; i <= 5; i++)
-    // {
-    // find_best_start_word(words, i);
-    // }
+    // run_benchmarks();
     return 0;
 }

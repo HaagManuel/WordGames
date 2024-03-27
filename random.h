@@ -20,6 +20,18 @@ struct RandomGenerator
         assert(vector.size() > 0);
         return vector[random_index(vector.size())];
     }
+
+    template <typename T>
+    std::vector<T> n_random_elements(int n, std::vector<T> &vector)
+    {
+        std::vector<T> elements;
+        elements.reserve(n);
+        for (int i = 0; i < n; i++)
+        {
+            elements.push_back(random_element(vector));
+        }
+        return elements;
+    }
     std::mt19937 gen;
 };
 

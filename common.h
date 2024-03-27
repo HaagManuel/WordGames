@@ -66,6 +66,31 @@ double mean(std::vector<int> &v)
     return (double)std::accumulate(v.begin(), v.end(), 0) / v.size();
 }
 
+// if vector is to short compute the mean of remaining vectors
+std::vector<long long> component_wise_mean(std::vector<std::vector<int>> &v)
+{
+    int max_cols = 0;
+    for (auto &vec : v)
+    {
+        max_cols = std::max(max_cols, (int)vec.size());
+    }
+    std::vector<long long> sums(max_cols, 0);
+    std::vector<long long> cnt(max_cols, 0);
+    for (auto &vec : v)
+    {
+        for (uint i = 0; i < vec.size(); i++)
+        {
+            sums[i] += vec[i];
+            cnt[i]++;
+        }
+    }
+    for (int i = 0; i < max_cols; i++)
+    {
+        sums[i] /= cnt[i];
+    }
+    return sums;
+}
+
 template <typename T>
 void print_vector(std::vector<T> &vec)
 {
