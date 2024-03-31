@@ -60,15 +60,18 @@ void benchmark_word_challenge(WordList &words)
     int repeats = 1000;
     int seed = 0;
     int min_len = 3;
+    uint min_words = 100;
     RandomWordGenerator gen_word(words, seed);
     WordChallenge wc(words);
     CharCounter counter;
     std::vector<std::vector<int>> index_len = compute_index_word_of_len(words);
 
-    std::cout << "time word challenge: \n";
+    std::string header = "word_length time[ms] avg_visited_nodes avg_result_size";
+    std::cout << header << "\n";
+
     for (uint len = min_len; len < index_len.size(); len++)
     {
-        if (index_len[len].size() >= 100)
+        if (index_len[len].size() >= min_words)
         {
             wc.reset_counter();
             int num_words = 0;
@@ -87,11 +90,7 @@ void benchmark_word_challenge(WordList &words)
             double timeMs = (double)measureTimeMs(run) / repeats;
             double avg_visited_nodes = wc.get_num_visited_nodes() / repeats;
             double avg_result = num_words / repeats;
-            std::cout << "length " << len << ": " << timeMs << "ms"
-                      << ", ";
-            std::cout << "avg visited nodes " << avg_visited_nodes << ", ";
-            std::cout << "avg result size " << avg_result << ", "
-                      << "\n";
+            std::cout << len << " " << timeMs << " " << avg_visited_nodes << " " << avg_result << "\n";
         }
     }
 }
@@ -103,7 +102,9 @@ void benchmark_wordle(WordList &words)
     int seed = 123;
     int min_len = 3;
     int max_len = 40;
-    WordleSimulation sim(words, max_guesses, seed);
+    GuesserStrategy strategy = GuesserStrategy::RANDOM_CANDITATE;
+    // GuesserStrategy strategy = GuesserStrategy::LETTER_FREQUENCY;
+    WordleSimulation sim(words, max_guesses, seed, strategy);
     RandomWordGenerator word_gen(words, seed);
 
     for (int len = min_len; len <= max_len; len++)

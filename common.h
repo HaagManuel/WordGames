@@ -148,10 +148,7 @@ struct CharCounter
 
     CharCounter(std::string &s) : counter(26)
     {
-        for (char c : s)
-        {
-            increment(c);
-        }
+        count_word(s);
     }
 
     void reset_counter()
@@ -162,9 +159,22 @@ struct CharCounter
     void new_counter(std::string &s)
     {
         reset_counter();
+        count_word(s);
+    }
+
+    void count_word(std::string &s)
+    {
         for (char c : s)
         {
             increment(c);
+        }
+    }
+
+    void set_occurence_of_letter(std::string &s)
+    {
+        for (char c : s)
+        {
+            set_count(c, 1);
         }
     }
 
@@ -186,6 +196,7 @@ struct CharCounter
         int i = char_to_int(c);
         counter[i] = count;
     }
+
     inline int get_count(char c)
     {
         int i = char_to_int(c);

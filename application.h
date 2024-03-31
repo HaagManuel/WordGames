@@ -97,7 +97,7 @@ struct WordChallengeApplication
 struct WordleApplication
 {
     // guesser must have different seed than word generation, otherwise he will guess it in the first try
-    WordleApplication(WordList &_words, int _seed) : seed(_seed), words(_words), wordle(words), word_gen(words, seed), guesser(words, seed + 1) {}
+    WordleApplication(WordList &_words, int _seed, GuesserStrategy strategy) : seed(_seed), words(_words), wordle(words), word_gen(words, seed), guesser(words, seed + 1, strategy), guesser_strategy(strategy) {}
 
     bool check_word(uint word_length, std::string &guess)
     {
@@ -274,7 +274,7 @@ struct WordleApplication
         if (!check_word_count(word_length, word_gen))
             return;
 
-        WordleSimulation wordle_sim(words, max_guesses, seed + 1);
+        WordleSimulation wordle_sim(words, max_guesses, seed + 1, guesser_strategy);
         auto word_sample = word_gen.n_random_words_of_len(repeats, word_length);
         auto run = [&]()
         {
@@ -303,4 +303,5 @@ struct WordleApplication
     Wordle wordle;
     RandomWordGenerator word_gen;
     RandomWordleGuesser guesser;
+    GuesserStrategy guesser_strategy;
 };
