@@ -23,7 +23,11 @@ void run_benchmarks()
 
     benchmark_word_challenge(words);
 
-    benchmark_wordle(words);
+    GuesserStrategy strategy = GuesserStrategy::RANDOM_CANDITATE;
+    benchmark_wordle(words, strategy);
+
+    strategy = GuesserStrategy::LETTER_FREQUENCY;
+    benchmark_wordle(words, strategy);
 }
 
 int main(int argc, char *argv[])
@@ -37,14 +41,19 @@ int main(int argc, char *argv[])
     std::string file = "../dictionary_large.txt";
     WordList words = io::read_dictionary(file);
 
-    benchmark_word_challenge(words);
-    // benchmark_wordle(words);
+    // benchmark_word_challenge(words);
+
+    // GuesserStrategy strategy = GuesserStrategy::RANDOM_CANDITATE;
+    GuesserStrategy strategy = GuesserStrategy::LETTER_FREQUENCY;
+    bool print_csv = true;
+
+    benchmark_wordle(words, strategy, print_csv);
+    // benchmark_wordle(words, strategy);
     return 0;
 
     int seed = 0;
     int max_guesses = 10;
     int word_length = 3;
-    GuesserStrategy strategy = GuesserStrategy::RANDOM_CANDITATE;
     WordleSimulation sim(words, max_guesses, seed, strategy);
     RandomWordGenerator word_gen(words, seed);
     int n = 3;

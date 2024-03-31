@@ -95,17 +95,28 @@ void benchmark_word_challenge(WordList &words)
     }
 }
 
-void benchmark_wordle(WordList &words)
+void benchmark_wordle(WordList &words, GuesserStrategy strategy, bool print_csv = false)
 {
-    int repeats = 1000;
+    int repeats = 100;
     int max_guesses = 10;
     int seed = 123;
     int min_len = 3;
     int max_len = 40;
-    GuesserStrategy strategy = GuesserStrategy::RANDOM_CANDITATE;
-    // GuesserStrategy strategy = GuesserStrategy::LETTER_FREQUENCY;
     WordleSimulation sim(words, max_guesses, seed, strategy);
     RandomWordGenerator word_gen(words, seed);
+
+    std::string strategy_name = strategy_to_string(strategy);
+
+    if (print_csv)
+    {
+        std::string header = "strategy word_length time[ms] avg_guesses";
+        std::cout << header << "\n";
+    }
+    else
+    {
+        std::cout << "benchmark wordle \n";
+        std::cout << "strategy: " << strategy_name << "\n";
+    }
 
     for (int len = min_len; len <= max_len; len++)
     {
@@ -123,22 +134,30 @@ void benchmark_wordle(WordList &words)
             }
         };
         double avg_time = (double)measureTimeMs(run) / repeats;
-        std::string unit = "ms";
         auto [guesses, visited, canditates] = sim.get_log_data();
         double avg_guesses = mean(guesses);
         auto avg_visited = component_wise_mean(visited);
         auto avg_canditates = component_wise_mean(canditates);
         sim.reset_logging();
-        std::cout << "length: " << len << "\n";
-        std::cout << "avg time per game: " << avg_time << " " << unit << "\n";
-        std::cout << "avg_guesses: " << avg_guesses << "\n";
 
-        std::cout << "visited ";
-        print_vector(avg_visited);
-        std::cout << "canditates ";
-        print_vector(avg_canditates);
+        if (print_csv)
+        {
+            std::cout << strategy_name << " " << len << " " << avg_time << " " << avg_guesses << "\n";
+        }
+        else
+        {
+            std::string unit = "ms";
+            std::cout << "length: " << len << "\n";
+            std::cout << "avg time per game: " << avg_time << " " << unit << "\n";
+            std::cout << "avg_guesses: " << avg_guesses << "\n";
 
-        std::cout << "\n";
-        std::cout << "\n";
+            std::cout << "visited ";
+            print_vector(avg_visited);
+            std::cout << "canditates ";
+            print_vector(avg_canditates);
+
+            std::cout << "\n";
+            std::cout << "\n";
+        }
     }
 }

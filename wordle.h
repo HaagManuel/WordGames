@@ -4,6 +4,7 @@
 #include <sstream>
 #include <tuple>
 #include <vector>
+#include <unordered_set>
 
 #include "common.h"
 #include "trie.h"
@@ -14,6 +15,22 @@ enum GuesserStrategy
     RANDOM_CANDITATE,
     LETTER_FREQUENCY,
 };
+
+std::string strategy_to_string(GuesserStrategy strategy)
+{
+    if (strategy == GuesserStrategy::RANDOM_CANDITATE)
+    {
+        return "random_canditate";
+    }
+    else if (strategy == GuesserStrategy::LETTER_FREQUENCY)
+    {
+        return "letter_frequency";
+    }
+    else
+    {
+        return "";
+    }
+}
 
 enum WordleHintChar
 {
@@ -100,6 +117,7 @@ struct RandomWordleGuesser
         know_chars = std::string(word_len, UNKNOWN);
         existing_letters.reset_counter();
         not_occuring_letter.reset_counter();
+        guessed_words.clear();
     }
 
     void take_hint(WordleHint &hint, std::string &guessed_word)
@@ -123,49 +141,60 @@ struct RandomWordleGuesser
         }
     }
 
-    std::string guess_random_canditate()
+    void remove_already_guessed_words()
+    {
+        uint i = 0;
+        while (i < canditate_index.size())
+        {
+            int idx = canditate_index[i];
+            if (guessed_words.count(idx) > 0)
+            {
+                std::swap(canditate_index[i], canditate_index.back());
+                canditate_index.pop_back();
+                continue;
+            }
+            i++;
+        }
+    }
+
+    // returns index to word
+    int guess_random_canditate()
     {
         visited_nodes = 0;
         canditate_size = words_of_len[word_len].size();
         if (number_of_guesses == 1)
         {
             int i = gen.random_index(words_of_len[word_len].size());
-            int j = words_of_len[word_len][i];
-            return words[j];
+            return words_of_len[word_len][i];
         }
         search_candidates();
 
+        remove_already_guessed_words();
         canditate_size = canditate_index.size();
+
         if (canditate_size == 0)
         {
             int j = gen.random_element(words_of_len[word_len]);
-            return words[j];
+            return j;
         }
         assert(canditate_size > 0);
-
-        int j = gen.random_element(canditate_index);
-        return words[j];
+        return gen.random_element(canditate_index);
     }
 
-    std::string guess_by_letter_frequency()
+    // returns index to word
+    int guess_by_letter_frequency()
     {
         search_candidates();
+        remove_already_guessed_words();
         canditate_size = canditate_index.size();
 
         if (canditate_size == 0)
         {
-            int j = gen.random_element(words_of_len[word_len]);
-            return words[j];
-        }
-        else if (canditate_size == 1)
-        {
-            int j = canditate_index[0];
-            return words[j];
+            return gen.random_element(words_of_len[word_len]);
         }
         else if (canditate_size < 10)
         {
-            int j = gen.random_element(canditate_index);
-            return words[j];
+            return gen.random_element(canditate_index);
         }
 
         // compute letter frequency of letters we have no information of for all candiates
@@ -218,20 +247,23 @@ struct RandomWordleGuesser
         }
         std::sort(score_word.begin(), score_word.end(), std::greater<>());
         int idx = score_word.front().second;
-        return words[idx];
+        return idx;
     }
 
     std::string make_guess()
     {
         number_of_guesses++;
+        int idx;
         if (guesser_strategy == GuesserStrategy::RANDOM_CANDITATE)
         {
-            return guess_random_canditate();
+            idx = guess_random_canditate();
         }
         else
         {
-            return guess_by_letter_frequency();
+            idx = guess_by_letter_frequency();
         }
+        guessed_words.insert(idx);
+        return words[idx];
     }
 
     int missing_letters()
@@ -308,6 +340,7 @@ struct RandomWordleGuesser
     int canditate_size;
 
     std::vector<int> canditate_index;
+    std::unordered_set<int> guessed_words;
 
     std::string know_chars;
     CharCounter existing_letters;
