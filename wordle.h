@@ -104,7 +104,7 @@ struct RandomWordleGuesser
         AdjacencyList<EdgeType> adj_list = trie.extract_graph<EdgeType>();
         graph = AdjacencyArray<EdgeType>::construct_with_dfs_order(adj_list);
 
-        node_to_word_index = StaticTrieGraph<EdgeType>(words, graph).construct_node_to_word_index(words);
+        node_to_word_index = StaticTrieGraph<EdgeType>(graph).construct_node_to_word_index(words);
         words_of_len = compute_index_word_of_len(words);
     }
 
@@ -117,6 +117,10 @@ struct RandomWordleGuesser
         know_chars = std::string(word_len, UNKNOWN);
         existing_letters.reset_counter();
         not_occuring_letter.reset_counter();
+        letter_not_at_pos.resize(word_len, std::vector<bool>(26, false));
+        for(auto &v : letter_not_at_pos) {
+            std::fill(v.begin(), v.end(), false);
+        }
         guessed_words.clear();
     }
 
@@ -133,6 +137,7 @@ struct RandomWordleGuesser
             else if (hint[i] == WordleHintChar::DIFFERENT_POSITION)
             {
                 existing_letters.set_count(c, 1);
+                letter_not_at_pos[i][c - 'a'] = true;
             }
             else if (hint[i] == WordleHintChar::DOES_NOT_OCCUR)
             {
@@ -245,8 +250,9 @@ struct RandomWordleGuesser
             }
             score_word[i] = {score, words_of_len[word_len][i]};
         }
-        std::sort(score_word.begin(), score_word.end(), std::greater<>());
-        int idx = score_word.front().second;
+        // std::sort(score_word.begin(), score_word.end(), std::greater<>());
+        // int idx = score_word.front().second;
+        auto [score, idx] = *std::max_element(score_word.begin(), score_word.end());
         return idx;
     }
 
@@ -310,20 +316,14 @@ struct RandomWordleGuesser
             char c = e.get_letter();
             bool is_word = e.is_word();
             char letter = know_chars[depth];
-            if (letter != UNKNOWN)
-            {
-                // if we know letter, only look for right edge
-                if (c == letter)
-                {
-                    found_letters.increment(c);
-                    search_rec(w, depth + 1, is_word);
-                    found_letters.decrement(c);
-                }
-                continue;
-            }
 
-            // ignore letters that do not occur
-            if (not_occuring_letter.get_count(c) == 0)
+            // we know letter at this position
+            bool forced_move = c == letter;
+
+            // letter still can exists
+            bool search_subtree = letter == UNKNOWN && not_occuring_letter.get_count(c) == 0 && !letter_not_at_pos[depth][c - 'a'];
+
+            if (forced_move || search_subtree)
             {
                 found_letters.increment(c);
                 search_rec(w, depth + 1, is_word);
@@ -346,6 +346,8 @@ struct RandomWordleGuesser
     CharCounter existing_letters;
     CharCounter not_occuring_letter;
     CharCounter found_letters;
+    std::vector<std::vector<bool>> letter_not_at_pos;
+
     int word_len;
     int number_of_guesses;
 
@@ -484,7 +486,6 @@ void find_best_start_word(WordList &words, int len)
     if (m == 0)
         return;
 
-    // maybe prune and only look for best
     int sample_size = 100;
     std::vector<int> sum_canditates(m, 0);
     for (int i = 0; i < m; i++)

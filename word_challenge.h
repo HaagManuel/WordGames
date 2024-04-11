@@ -23,8 +23,8 @@ struct WordChallenge
         AdjacencyList<EdgeType> adj_list = trie.extract_graph<EdgeType>();
         if (rearrange_graph)
         {
-            // graph = AdjacencyArray<EdgeType>::construct_with_dfs_order(adj_list);
-            graph = AdjacencyArray<EdgeType>::construct_with_bfs_order(adj_list);
+            graph = AdjacencyArray<EdgeType>::construct_with_dfs_order(adj_list);
+            // graph = AdjacencyArray<EdgeType>::construct_with_bfs_order(adj_list);
         }
         else
         {
@@ -66,6 +66,7 @@ struct WordChallenge
             if (is_word)
             {
                 int index = node_to_word_index[w];
+                assert(index >= 0);
                 words_of_length[word.size()].push_back(index);
             }
 

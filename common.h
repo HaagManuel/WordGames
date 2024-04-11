@@ -94,7 +94,7 @@ std::vector<long long> component_wise_mean(std::vector<std::vector<int>> &v)
 template <typename T>
 void print_vector(std::vector<T> &vec)
 {
-    for (auto &x : vec)
+    for (auto x : vec)
     {
         std::cout << x << " ";
     }
@@ -120,6 +120,7 @@ void print_indexed_words(std::vector<int> &index, WordList &words)
 {
     for (auto i : index)
     {
+        assert(i >= 0 && i < (int)words.size());
         std::cout << words[i] << "\n";
     }
 }

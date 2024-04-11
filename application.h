@@ -84,8 +84,8 @@ struct WordChallengeApplication
             std::cout << "\n";
             print_indexed_words(indices, words);
             std::cout << "\n"
-                      << "found " << indices.size() << " words"
-                      << "\n";
+                      << "--> found " << indices.size() << " words"
+                      << "\n\n";
         }
     }
 

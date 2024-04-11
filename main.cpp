@@ -41,26 +41,17 @@ int main(int argc, char *argv[])
     std::string file = "../dictionary_large.txt";
     WordList words = io::read_dictionary(file);
 
+    // Trie trie(words);
+    // int num_nodes = trie.get_num_nodes();
+    // std::cout << "Trie has " << num_nodes << " nodes. \n";
+    // return 0;
+
     // benchmark_word_challenge(words);
 
-    // GuesserStrategy strategy = GuesserStrategy::RANDOM_CANDITATE;
-    GuesserStrategy strategy = GuesserStrategy::LETTER_FREQUENCY;
-    bool print_csv = true;
+    GuesserStrategy strategy = GuesserStrategy::RANDOM_CANDITATE;
+    // GuesserStrategy strategy = GuesserStrategy::LETTER_FREQUENCY;
+    bool print_csv = false;
 
     benchmark_wordle(words, strategy, print_csv);
-    // benchmark_wordle(words, strategy);
-    return 0;
-
-    int seed = 0;
-    int max_guesses = 10;
-    int word_length = 3;
-    WordleSimulation sim(words, max_guesses, seed, strategy);
-    RandomWordGenerator word_gen(words, seed);
-    int n = 3;
-    for (int i = 0; i < n; i++)
-    {
-        sim.play_one_round<true>(word_gen.random_word_of_length(word_length));
-    }
-
     return 0;
 }

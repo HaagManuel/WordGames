@@ -47,6 +47,7 @@ namespace io
         if (!file.is_open())
         {
             std::cerr << "Error: Unable to open the file: " << path << std::endl;
+            exit(1);
             return words;
         }
 

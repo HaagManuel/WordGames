@@ -20,7 +20,7 @@ struct StaticTrieGraph
     }
 
     // use same order as in adj_list
-    StaticTrieGraph(WordList &words, AdjacencyArray<EdgeType> &adj_array)
+    StaticTrieGraph(AdjacencyArray<EdgeType> &adj_array)
     {
         graph = adj_array;
     }
@@ -31,6 +31,7 @@ struct StaticTrieGraph
         for (uint i = 0; i < words.size(); i++)
         {
             int v = find_node(words[i]);
+            assert(v > 0);
             node_to_word_index[v] = i;
         }
         return node_to_word_index;

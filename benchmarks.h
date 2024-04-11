@@ -98,10 +98,10 @@ void benchmark_word_challenge(WordList &words)
 void benchmark_wordle(WordList &words, GuesserStrategy strategy, bool print_csv = false)
 {
     int repeats = 100;
-    int max_guesses = 10;
+    int max_guesses = 20;
     int seed = 123;
     int min_len = 3;
-    int max_len = 40;
+    int max_len = 20;
     WordleSimulation sim(words, max_guesses, seed, strategy);
     RandomWordGenerator word_gen(words, seed);
 
