@@ -95,7 +95,7 @@ void benchmark_word_challenge(WordList &words)
     }
 }
 
-void benchmark_wordle(WordList &words, GuesserStrategy strategy, bool print_csv = false)
+void benchmark_wordle(WordList &words, GuesserStrategy strategy, bool print_header = false, bool print_csv = false)
 {
     int repeats = 100;
     int max_guesses = 20;
@@ -107,12 +107,12 @@ void benchmark_wordle(WordList &words, GuesserStrategy strategy, bool print_csv 
 
     std::string strategy_name = strategy_to_string(strategy);
 
-    if (print_csv)
+    if (print_header && print_csv)
     {
-        std::string header = "strategy word_length time[ms] avg_guesses";
+        std::string header = "total_words strategy word_length time[ms] avg_guesses candidates_1 candidates_2 candidates_3";
         std::cout << header << "\n";
     }
-    else
+    else if (!print_csv)
     {
         std::cout << "benchmark wordle \n";
         std::cout << "strategy: " << strategy_name << "\n";
@@ -142,7 +142,11 @@ void benchmark_wordle(WordList &words, GuesserStrategy strategy, bool print_csv 
 
         if (print_csv)
         {
-            std::cout << strategy_name << " " << len << " " << avg_time << " " << avg_guesses << "\n";
+            double candidates1 = avg_canditates.size() >= 1 ? avg_canditates[0] : 0;
+            double candidates2 = avg_canditates.size() >= 2 ? avg_canditates[1] : 0;
+            double candidates3 = avg_canditates.size() >= 3 ? avg_canditates[2] : 0;
+            std::cout << words.size() << " " << strategy_name << " " << len << " " << avg_time << " " << avg_guesses << " ";
+            std::cout << candidates1 << " " << candidates2 << " " << candidates3 << "\n";
         }
         else
         {

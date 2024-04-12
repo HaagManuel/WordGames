@@ -106,6 +106,25 @@ struct RandomWordleGuesser
 
         node_to_word_index = StaticTrieGraph<EdgeType>(graph).construct_node_to_word_index(words);
         words_of_len = compute_index_word_of_len(words);
+
+        // precompute letter count of each word
+        letter_cnt_words = std::vector<CharCounter>(words.size());
+        for (uint i = 0; i < words.size(); i++)
+        {
+            CharCounter cnt(words[i]);
+            letter_cnt_words[i] = cnt;
+        }
+
+        // precompute best start word for each length
+        best_start_word = std::vector<int>(words_of_len.size());
+        for (uint i = 0; i < words_of_len.size(); i++)
+        {
+            if (words_of_len[i].size() > 0)
+            {
+                best_start_word[i] = compute_highest_score_word(words_of_len[i]);
+                // std::cout << i << " "  << words[best_start_word[i]] << "\n";
+            }
+        }
     }
 
     void new_word(int _word_len)
@@ -118,7 +137,8 @@ struct RandomWordleGuesser
         existing_letters.reset_counter();
         not_occuring_letter.reset_counter();
         letter_not_at_pos.resize(word_len, std::vector<bool>(26, false));
-        for(auto &v : letter_not_at_pos) {
+        for (auto &v : letter_not_at_pos)
+        {
             std::fill(v.begin(), v.end(), false);
         }
         guessed_words.clear();
@@ -186,47 +206,22 @@ struct RandomWordleGuesser
         return gen.random_element(canditate_index);
     }
 
-    // returns index to word
-    int guess_by_letter_frequency()
+    // compute letter frequency of letters we have no information of for all candiates
+    int compute_highest_score_word(std::vector<int> &candidates)
     {
-        search_candidates();
-        remove_already_guessed_words();
-        canditate_size = canditate_index.size();
-
-        if (canditate_size == 0)
-        {
-            return gen.random_element(words_of_len[word_len]);
-        }
-        else if (canditate_size < 10)
-        {
-            return gen.random_element(canditate_index);
-        }
-
-        // compute letter frequency of letters we have no information of for all candiates
-        int num_words = words_of_len[word_len].size();
-
+        int word_length = words[candidates[0]].size();
+        int num_words = words_of_len[word_length].size();
+        int num_candidates = candidates.size();
         CharCounter cnt_freq;
-        std::vector<CharCounter> cnt_words(num_words);
-        std::vector<CharCounter> cnt_canditates(canditate_size);
-        for (int i = 0; i < num_words; i++)
-        {
-            int j = words_of_len[word_len][i];
-            cnt_words[i].count_word(words[j]);
-        }
-        for (int i = 0; i < canditate_size; i++)
-        {
-            int j = canditate_index[i];
-            cnt_canditates[i].count_word(words[j]);
-        }
-        // count letters which we did not try
         for (char c = 'a'; c <= 'z'; c++)
         {
             // skip letter where we already made a guess information
             if (existing_letters.get_count(c) > 0 || not_occuring_letter.get_count(c) > 0)
                 continue;
-            for (int i = 0; i < canditate_size; i++)
+            for (int i = 0; i < num_candidates; i++)
             {
-                if (cnt_canditates[i].get_count(c) > 0)
+                int idx = candidates[i];
+                if (letter_cnt_words[idx].get_count(c) > 0)
                 {
                     cnt_freq.increment(c);
                 }
@@ -239,21 +234,44 @@ struct RandomWordleGuesser
             freq[i] = (double)cnt_freq.get_count(i + 'a') / sum;
         }
 
-        std::vector<std::pair<double, int>> score_word(num_words);
+        score_word.resize(num_words);
         for (int i = 0; i < num_words; i++)
         {
+            int idx = words_of_len[word_length][i];
             double score = 0;
             for (int j = 0; j < 26; j++)
             {
-                bool b = cnt_words[i].get_count(j + 'a') > 0;
+                int letter_freq = letter_cnt_words[idx].get_count(j + 'a');
+                bool b = letter_freq > 0;
                 score += b * freq[j];
             }
-            score_word[i] = {score, words_of_len[word_len][i]};
+            score_word[i] = {score, words_of_len[word_length][i]};
         }
-        // std::sort(score_word.begin(), score_word.end(), std::greater<>());
-        // int idx = score_word.front().second;
         auto [score, idx] = *std::max_element(score_word.begin(), score_word.end());
         return idx;
+    }
+
+    // returns index to word
+    int guess_by_letter_frequency()
+    {
+        if (number_of_guesses == 1)
+        {
+            return best_start_word[word_len];
+        }
+
+        search_candidates();
+        remove_already_guessed_words();
+        canditate_size = canditate_index.size();
+
+        if (canditate_size == 0)
+        {
+            return gen.random_element(words_of_len[word_len]);
+        }
+        else if (canditate_size < 10)
+        {
+            return gen.random_element(canditate_index);
+        }
+        return compute_highest_score_word(canditate_index);
     }
 
     std::string make_guess()
@@ -347,6 +365,10 @@ struct RandomWordleGuesser
     CharCounter not_occuring_letter;
     CharCounter found_letters;
     std::vector<std::vector<bool>> letter_not_at_pos;
+
+    std::vector<CharCounter> letter_cnt_words;
+    std::vector<int> best_start_word;
+    std::vector<std::pair<double, int>> score_word;
 
     int word_len;
     int number_of_guesses;
