@@ -98,15 +98,16 @@ namespace cli
     {
         CLI::App app{"Word Challenge and Wordle Game."};
 
-        uint word_length = 3;
+        uint word_length = 5;
         uint repeats = 10;
         uint max_guesses = 10;
         int seed = 0;
         std::string game_type = "word_challenge";
         std::string game_mode_word_challenge = "auto";
         std::string game_mode_wordle = "auto";
-        std::string wordle_guesser_strategy = "random_canditate";
+        std::string wordle_guesser_strategy = "letter_frequency";
         std::string dictionary_file = "../dictionary_9030.txt";
+        bool run_wordle_experiment = false;
 
         std::vector<std::string> allowed_game_types = {"word_challenge", "wordle"};
         std::vector<std::string> allowed_game_mode_wordle = {"auto", "keeper", "guesser"};
@@ -122,6 +123,8 @@ namespace cli
         app.add_option("-c, --game_mode_word_challenge", game_mode_word_challenge, "game mode in word challenge game")->check(CLI::IsMember(allowed_game_mode_word_challenge));
         app.add_option("--wordle_strategy", wordle_guesser_strategy, "strategy of the guesser in wordle")->check(CLI::IsMember(allowed_wordle_strategies));
         app.add_option("-f, --file", dictionary_file, "path to dictionary file")->check(CLI::ExistingFile);
+        
+        app.add_flag("-e, --run_wordle_experiment", run_wordle_experiment, "run wordle experiment");
 
         CLI11_PARSE(app, argc, argv);
 
@@ -129,7 +132,11 @@ namespace cli
 
         config.print();
 
-        if (game_type == "wordle")
+        if (run_wordle_experiment)
+        {
+            wordle_experiment();
+        }
+        else if (game_type == "wordle")
         {
             wordle_application(config);
         }

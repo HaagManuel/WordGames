@@ -54,44 +54,48 @@ void print_colorful_hint(WordleHint &hint, std::string &word)
 
 struct Wordle
 {
-    Wordle(WordList &_words) : words(_words), trie(words), counter() {}
+    Wordle(WordList &_words) : words(_words), trie(words) {}
 
     void get_wordle_hint(WordleHint &hints, std::string &guess)
     {
         assert(hints.size() == guess.size());
         int n = hints.size();
 
+        count.new_counter(secret_word);
+        std::fill(hints.begin(), hints.end(), WordleHintChar::DOES_NOT_OCCUR);
+
+        // first find correct position
         for (int i = 0; i < n; i++)
         {
             char c = guess[i];
             if (c == secret_word[i])
             {
                 hints[i] = WordleHintChar::CORRECT_POSITION;
+                count.decrement(c);
             }
-            else if (counter.get_count(c) > 0)
+        }
+
+        // letters are marked yellow from left to right
+        for (int i = 0; i < n; i++)
+        {
+            char c = guess[i];
+            if (c != secret_word[i] && count.get_count(c) > 0)
             {
                 hints[i] = WordleHintChar::DIFFERENT_POSITION;
-            }
-            else
-            {
-                hints[i] = WordleHintChar::DOES_NOT_OCCUR;
+                count.decrement(c);
             }
         }
     }
 
-    void set_secret_word(std::string s)
-    {
-        secret_word = s;
-        counter.new_counter(s);
-    }
+    void set_secret_word(std::string s) { secret_word = s; }
 
     bool is_valid_word(std::string &s) { return trie.contains_word(s); }
 
     bool is_secret_word(std::string &s) const { return s == secret_word; }
 
+    CharCounter count;
     WordList &words;
     Trie trie;
-    CharCounter counter;
     std::string secret_word;
 };
 
@@ -115,14 +119,38 @@ struct RandomWordleGuesser
             letter_cnt_words[i] = cnt;
         }
 
+        // precompute maximal upper bound for each word length
+        upper_bound_words = std::vector<CharCounter>(words_of_len.size());
+        for (uint i = 0; i < words_of_len.size(); i++)
+        {
+            if (words_of_len[i].size() > 0)
+            {
+                int bound = 0;
+                for (char c : ALPHABET)
+                {
+                    for (auto idx : words_of_len[i])
+                    {
+                        bound = std::max(bound, letter_cnt_words[idx].get_count(c));
+                    }
+                    upper_bound_words[i].set_count(c, bound);
+                }
+                // print_vector(upper_bound_words[i].counter);
+            }
+        }
+
         // precompute best start word for each length
+        lower_bound.reset_counter();
+        for (char c : ALPHABET)
+        {
+            upper_bound.set_count(c, words_of_len.size());
+        }
         best_start_word = std::vector<int>(words_of_len.size());
         for (uint i = 0; i < words_of_len.size(); i++)
         {
             if (words_of_len[i].size() > 0)
             {
                 best_start_word[i] = compute_highest_score_word(words_of_len[i]);
-                // std::cout << i << " "  << words[best_start_word[i]] << "\n";
+                // std::cout << i << " " << words[best_start_word[i]] << "\n";
             }
         }
     }
@@ -134,8 +162,14 @@ struct RandomWordleGuesser
         word_len = _word_len;
         number_of_guesses = 0;
         know_chars = std::string(word_len, UNKNOWN);
-        existing_letters.reset_counter();
-        not_occuring_letter.reset_counter();
+
+        lower_bound.reset_counter();
+        for (char c : ALPHABET)
+        {
+            int char_bound = upper_bound_words[word_len].get_count(c);
+            upper_bound.set_count(c, char_bound);
+        }
+
         letter_not_at_pos.resize(word_len, std::vector<bool>(26, false));
         for (auto &v : letter_not_at_pos)
         {
@@ -152,17 +186,61 @@ struct RandomWordleGuesser
             if (hint[i] == WordleHintChar::CORRECT_POSITION)
             {
                 know_chars[i] = c;
-                existing_letters.set_count(c, 1);
             }
             else if (hint[i] == WordleHintChar::DIFFERENT_POSITION)
             {
-                existing_letters.set_count(c, 1);
                 letter_not_at_pos[i][c - 'a'] = true;
             }
-            else if (hint[i] == WordleHintChar::DOES_NOT_OCCUR)
+        }
+
+        int n = hint.size();
+        int num_known = 0;
+        CharCounter known_green;
+
+        for (int i = 0; i < n; i++)
+        {
+            if (know_chars[i] != UNKNOWN)
             {
-                not_occuring_letter.set_count(c, 1);
+                num_known++;
+                known_green.increment(know_chars[i]);
             }
+        }
+        for (char c : ALPHABET)
+        {
+            int yellow = 0;
+            int green = 0;
+            int gray = 0;
+            for (int i = 0; i < n; i++)
+            {
+                char l = guessed_word[i];
+                auto h = hint[i];
+                if (l == c)
+                {
+                    yellow += h == WordleHintChar::DIFFERENT_POSITION;
+                    green += h == WordleHintChar::CORRECT_POSITION;
+                    gray += h == WordleHintChar::DOES_NOT_OCCUR;
+                }
+            }
+            int old_bound, bound;
+
+            // green and yellow letters have to be at least present
+            old_bound = lower_bound.get_count(c);
+            bound = green + yellow;
+            lower_bound.set_count(c, std::max(old_bound, bound));
+
+            // for each free place that is not green
+            old_bound = upper_bound.get_count(c);
+            bound = n - num_known + known_green.get_count(c);
+            upper_bound.set_count(c, std::min(old_bound, bound));
+
+            // if there is a gray letter, not more than the current count of yellow and green is possible
+            if (gray > 0)
+            {
+                old_bound = upper_bound.get_count(c);
+                bound = green + yellow;
+                upper_bound.set_count(c, std::min(old_bound, bound));
+            }
+            // std::cout << c << " " << lower_bound.get_count(c) << " " << upper_bound.get_count(c) << "\n";
         }
     }
 
@@ -213,10 +291,10 @@ struct RandomWordleGuesser
         int num_words = words_of_len[word_length].size();
         int num_candidates = candidates.size();
         CharCounter cnt_freq;
-        for (char c = 'a'; c <= 'z'; c++)
+        for (char c : ALPHABET)
         {
             // skip letter where we already made a guess information
-            if (existing_letters.get_count(c) > 0 || not_occuring_letter.get_count(c) > 0)
+            if (lower_bound.get_count(c) > 0 || upper_bound.get_count(c) == 0)
                 continue;
             for (int i = 0; i < num_candidates; i++)
             {
@@ -294,10 +372,20 @@ struct RandomWordleGuesser
     int missing_letters()
     {
         int missing = 0;
-        for (int i = 0; i < 26; i++)
+        for (char c : ALPHABET)
         {
-            char c = i + 'a';
-            missing += (found_letters.get_count(c) < existing_letters.get_count(c));
+            int cnt = found_letters.get_count(c);
+            int lower = lower_bound.get_count(c);
+            int upper = upper_bound.get_count(c);
+            if (cnt <= upper)
+            {
+                missing += std::max(0, lower - cnt);
+            }
+            else
+            {
+                // indicates that we prune search
+                return 1e9;
+            }
         }
         return missing;
     }
@@ -339,8 +427,9 @@ struct RandomWordleGuesser
             // we know letter at this position
             bool forced_move = c == letter;
 
-            // letter still can exists
-            bool search_subtree = letter == UNKNOWN && not_occuring_letter.get_count(c) == 0 && !letter_not_at_pos[depth][c - 'a'];
+            int new_cnt = found_letters.get_count(c) + 1;
+            int upper = upper_bound.get_count(c);
+            bool search_subtree = letter == UNKNOWN && !letter_not_at_pos[depth][c - 'a'] && new_cnt <= upper;
 
             if (forced_move || search_subtree)
             {
@@ -360,10 +449,12 @@ struct RandomWordleGuesser
 
     std::vector<int> canditate_index;
     std::unordered_set<int> guessed_words;
-
     std::string know_chars;
-    CharCounter existing_letters;
-    CharCounter not_occuring_letter;
+
+    std::vector<CharCounter> upper_bound_words;
+    CharCounter lower_bound;
+    CharCounter upper_bound;
+
     CharCounter found_letters;
     std::vector<std::vector<bool>> letter_not_at_pos;
 
@@ -447,6 +538,10 @@ struct WordleSimulation
             {
                 std::cout << "visited nodes: " << visited << "\n";
                 std::cout << "candiates: " << canditates << "\n";
+                if (canditates <= 20)
+                {
+                    print_indexed_words(guesser.canditate_index, words);
+                }
             }
             if (wordle.is_secret_word(guess))
             {

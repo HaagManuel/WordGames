@@ -221,6 +221,9 @@ struct WordleApplication
         ss << "    0 - character does not occur in the word,\n";
         ss << "    1 - character occurs at a different position,\n";
         ss << "    2 - character at this position is correct.\n";
+        ss << "When setting yellow letters, keep in mind that the green letters do not count and yellow letters are set from left to right.\n";
+        ss << "Example: secret: eabcd, guess: eexyz, hint: 20000\n";
+        ss << "Example: secret: eeabc, guess: exyee, hint: 20010\n";
         color_print(ss, YELLOW);
 
         guesser.new_word(word_length);
@@ -232,8 +235,8 @@ struct WordleApplication
             num_guesses++;
 
             int visited_nodes = guesser.get_visited_nodes();
-            int canditates = guesser.get_canditate_size();
-            if (canditates == 0)
+            int candidates = guesser.get_canditate_size();
+            if (candidates == 0)
             {
                 ss << "no candiates anymore\n";
                 color_print(ss, YELLOW);
@@ -241,7 +244,7 @@ struct WordleApplication
             }
             ss << "\n"
                << "visited nodes: " << visited_nodes << "\n"
-               << "candiates: " << canditates << "\n";
+               << "candiates: " << candidates << "\n";
             color_print(ss, MAGENTA);
 
             std::string input;
@@ -284,17 +287,17 @@ struct WordleApplication
             }
         };
         double avg_time = (double)measureTimeMicroS(run) / repeats;
-        auto [guesses, visited, canditates] = wordle_sim.get_log_data();
+        auto [guesses, visited, candidates] = wordle_sim.get_log_data();
         double avg_guesses = mean(guesses);
         auto avg_visited = component_wise_mean(visited);
-        auto avg_canditates = component_wise_mean(canditates);
+        auto avg_candidates = component_wise_mean(candidates);
         std::string unit = "microseconds";
         std::cout << "avg time per game: " << avg_time << " " << unit << "\n";
         std::cout << "avg_guesses      : " << avg_guesses << "\n";
         std::cout << "avg visited nodes:\n";
         print_vector(avg_visited);
-        std::cout << "avg canditates   :\n";
-        print_vector(avg_canditates);
+        std::cout << "avg candidates   :\n";
+        print_vector(avg_candidates);
         std::cout << "\n";
     }
 
@@ -305,3 +308,21 @@ struct WordleApplication
     RandomWordleGuesser guesser;
     GuesserStrategy guesser_strategy;
 };
+
+void wordle_experiment()
+{
+    std::string file_small = "../dictionary_9030.txt";
+    std::string file_large = "../dictionary_large.txt";
+    WordList words_small = io::read_dictionary(file_small);
+    WordList words_large = io::read_dictionary(file_large);
+
+    GuesserStrategy strategy_random = GuesserStrategy::RANDOM_CANDITATE;
+    GuesserStrategy strategy_frequency = GuesserStrategy::LETTER_FREQUENCY;
+
+    bool print_csv = true;
+    bool print_header = true;
+    benchmark_wordle(words_small, strategy_random, print_header, print_csv);
+    benchmark_wordle(words_small, strategy_frequency, !print_header, print_csv);
+    benchmark_wordle(words_large, strategy_random, !print_header, print_csv);
+    benchmark_wordle(words_large, strategy_frequency, !print_header, print_csv);
+}

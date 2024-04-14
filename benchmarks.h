@@ -102,6 +102,7 @@ void benchmark_wordle(WordList &words, GuesserStrategy strategy, bool print_head
     int seed = 123;
     int min_len = 3;
     int max_len = 20;
+    int failed_guesses = 0;
     WordleSimulation sim(words, max_guesses, seed, strategy);
     RandomWordGenerator word_gen(words, seed);
 
@@ -109,7 +110,7 @@ void benchmark_wordle(WordList &words, GuesserStrategy strategy, bool print_head
 
     if (print_header && print_csv)
     {
-        std::string header = "total_words strategy word_length time[ms] avg_guesses candidates_1 candidates_2 candidates_3";
+        std::string header = "total_words strategy word_length time[ms] avg_guesses candidates_1 candidates_2 candidates_3 failed_guesses";
         std::cout << header << "\n";
     }
     else if (!print_csv)
@@ -139,6 +140,10 @@ void benchmark_wordle(WordList &words, GuesserStrategy strategy, bool print_head
         auto avg_visited = component_wise_mean(visited);
         auto avg_canditates = component_wise_mean(canditates);
         sim.reset_logging();
+        for (auto g : guesses)
+        {
+            failed_guesses += g == max_guesses;
+        }
 
         if (print_csv)
         {
@@ -146,7 +151,8 @@ void benchmark_wordle(WordList &words, GuesserStrategy strategy, bool print_head
             double candidates2 = avg_canditates.size() >= 2 ? avg_canditates[1] : 0;
             double candidates3 = avg_canditates.size() >= 3 ? avg_canditates[2] : 0;
             std::cout << words.size() << " " << strategy_name << " " << len << " " << avg_time << " " << avg_guesses << " ";
-            std::cout << candidates1 << " " << candidates2 << " " << candidates3 << "\n";
+            std::cout << candidates1 << " " << candidates2 << " " << candidates3 << " ";
+            std::cout << failed_guesses << "\n";
         }
         else
         {
@@ -154,6 +160,7 @@ void benchmark_wordle(WordList &words, GuesserStrategy strategy, bool print_head
             std::cout << "length: " << len << "\n";
             std::cout << "avg time per game: " << avg_time << " " << unit << "\n";
             std::cout << "avg_guesses: " << avg_guesses << "\n";
+            std::cout << "failed guesses: " << failed_guesses << "\n";
 
             std::cout << "visited ";
             print_vector(avg_visited);
