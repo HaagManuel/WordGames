@@ -10,6 +10,7 @@ The second game is the famous [*Wordle*](https://en.wikipedia.org/wiki/Wordle) g
 We consider arbitrarily word lengths and a larger dictionary than in the original game.
 
 Example: Wordle game #196 solved in 4 guess
+
 ![wordle_example](/documents/wordle_196.png)
 
 
