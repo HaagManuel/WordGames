@@ -2,10 +2,13 @@
 
 This project is part of the course [Advanced Datastructures](https://www.fib.upc.edu/en/studies/masters/master-innovation-and-research-informatics/curriculum/syllabus/ADS-MIRI) taught at the UPC FIB in Barcelona. 
 The task is to implement two string based games.
+
 In the first one we want to design an algorithm to generate all words from a dictionary that can be formed from a multi set of letters.
 For example given the letters *abracadabra*, 4 words can be formed: *bad, bar, cab, card*.
+
 The second game is the famous [*Wordle*](https://en.wikipedia.org/wiki/Wordle) game.
 We consider arbitrarily word lengths and a larger dictionary than in the original game.
+
 Example: Wordle game #196 solved in 4 guess
 ![wordle_example](/documents/wordle_196.png)
 
