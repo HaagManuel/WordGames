@@ -256,6 +256,7 @@ struct RandomWordleGuesser
     {
         if (number_of_guesses == 1)
         {
+            canditate_size = words_of_len[word_len].size();
             return best_start_word[word_len];
         }
 

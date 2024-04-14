@@ -50,9 +50,9 @@ void wordle_experiment()
 
 int main(int argc, char *argv[])
 {
-
     cli::start_cli_application(argc, argv);
     return 0;
+
     // run_benchmarks();
 
     // wordle_experiment();
