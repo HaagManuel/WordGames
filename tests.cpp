@@ -42,7 +42,6 @@ TEST(TrieTest, PositveAndNegative)
     }
     for (auto &s : v2)
     {
-        std::cout << s << "\n";
         ASSERT_FALSE(trie1.contains_word(s));
         ASSERT_FALSE(trie2.contains_word(s));
         ASSERT_FALSE(trie3.contains_word(s));
