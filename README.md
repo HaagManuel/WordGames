@@ -35,7 +35,7 @@ To show see all commandline options run:
 ### Some Results
 We are using a dictionary with 300K english words consisting only of [a-z]. 
 Number of visited nodes and result size for  *Word Challenge* when chossing a random word from the dictionary as input.
-![wordle_example](/eval/word_challenge_nodes.png)
+![wordle_example](/documents/word_challenge_nodes.jpg)
 
 Average number of guesses to solve *Wordle*.
-![wordle_example](/eval/wordle_guesses.png)
+![wordle_example](/documents/wordle_guesses.jpg)
